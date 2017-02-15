@@ -168,6 +168,16 @@
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
+    <Compile Include="Models\bptBpts.cs" />
+    <Compile Include="Models\bptCadastroStatus.cs" />
+    <Compile Include="Models\bptProjects.cs" />
+    <Compile Include="Models\bptReleases.cs" />
+    <Compile Include="Models\bptValidPlanoEvid.cs" />
+    <Compile Include="Models\ctsImpactedByDefects.cs" />
+    <Compile Include="Models\defectDetail.cs" />
+    <Compile Include="Models\defectsOpen.cs" />
+    <Compile Include="Models\defectsStatus.cs" />
+    <Compile Include="Models\status.cs" />
     <Compile Include="Models\defectAverangeTime.cs" />
     <Compile Include="Models\agingMedioDefects.cs" />
     <Compile Include="Models\defectDetectableInDev.cs" />

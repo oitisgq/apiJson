@@ -12,6 +12,7 @@ namespace projectJson.Models
         public string delivery { get; set; }
         public string subprojectDelivery { get; set; }
         public string name { get; set; }
+        public string objective { get; set; }
         public string classification { get; set; }
         public string state { get; set; }
         public string release { get; set; }

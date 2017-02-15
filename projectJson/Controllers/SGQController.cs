@@ -25,7 +25,7 @@ namespace projectJson.Controllers
 
         [HttpGet]
         [Route("devManufacturers")]
-        public List<devManufacturers> GetdevManufacturers()
+        public List<devManufacturers> getdevManufacturers()
         {
             string sql = @"
                 select distinct
@@ -67,7 +67,7 @@ namespace projectJson.Controllers
 
         [HttpGet]
         [Route("systems")]
-        public List<systems> GetSystems()
+        public List<systems> getSystems()
         {
             string sql = @"
                 select distinct
@@ -112,7 +112,7 @@ namespace projectJson.Controllers
 
         [HttpGet] // DEVERA SAIR, QUANDO IMPLATADO EM PRODUCAO
         [Route("projects")]
-        public List<projects> GetProjects()
+        public List<projects> getProjects()
         {
             string sql = @"
                 select distinct
@@ -189,7 +189,7 @@ namespace projectJson.Controllers
 
         [HttpGet]
         [Route("projects_")] // DEVERA ALTERAR O NOME QUANDO IMPLATADO EM PRODUCAO
-        public List<project> GetProjects_()
+        public List<project> getProjects_()
         {
             string sql = @"
                 select 
@@ -198,6 +198,7 @@ namespace projectJson.Controllers
                     sgq_projetos.entrega as delivery,
                     convert(varchar, cast(substring(sgq_projetos.subprojeto,4,8) as int)) + ' ' + convert(varchar,cast(substring(sgq_projetos.entrega,8,8) as int)) as subprojectDelivery,
                     biti_subprojetos.nome as name,
+                    biti_subprojetos.objetivo as objective,
 					biti_subprojetos.classificacao_nome as classification,
 					replace(replace(replace(replace(replace(biti_subprojetos.estado,'CONSOLIDAÇÃO E APROVAÇÃO DO PLANEJAMENTO','CONS/APROV. PLAN'),'PLANEJAMENTO','PLANEJ.'),'DESENHO DA SOLUÇÃO','DES.SOL'),'VALIDAÇÃO','VALID.'),'AGUARDANDO','AGUAR.') as state,
 					(select Sigla from sgq_meses m where m.id = SGQ_Releases_Entregas.release_mes) + ' ' + convert(varchar, SGQ_Releases_Entregas.release_ano) as release,
@@ -283,7 +284,7 @@ namespace projectJson.Controllers
 
         [HttpGet]
         [Route("iterations/{subproject}/{delivery}")]
-        public List<iteration> GetIterationByProject(string subproject, string delivery)
+        public List<iteration> getIterationByProject(string subproject, string delivery)
         {
             string sql = @"
                 select distinct 
@@ -312,7 +313,7 @@ namespace projectJson.Controllers
 
         [HttpGet]
         [Route("defectsDensity")]
-        public List<densityDefects> GetDensity()
+        public List<densityDefects> getDensity()
         {
             string sql = @"
                 select 
@@ -389,7 +390,7 @@ namespace projectJson.Controllers
 
         [HttpGet]
         [Route("defectsDensity/{subproject}/{delivery}")]
-        public List<densityDefects> GetDensityByProject(string subproject, string delivery)
+        public List<densityDefects> getDensityByProject(string subproject, string delivery)
         {
             Debug.WriteLine(subproject);
             
@@ -462,7 +463,7 @@ namespace projectJson.Controllers
         /*
         [HttpGet]
         [Route("agingDefects")]
-        public List<agingDefects> GetAgingDefects()
+        public List<agingDefects> getAgingDefects()
         {
             string sql = @"
                	select 
@@ -511,7 +512,7 @@ namespace projectJson.Controllers
 
         [HttpGet] // DEVERAR SAIR, QUANDO IMPLANTADO EM PRODUÇÃO
         [Route("DefectsMiddleAges")]
-        public List<agingMedioDefects> GetAgingMedio()
+        public List<agingMedioDefects> getAgingMedio()
         {
             string sql = @"
                 select 
@@ -569,7 +570,7 @@ namespace projectJson.Controllers
 
         [HttpGet]
         [Route("DefectsAverangeTime/{subproject}/{delivery}")]
-        public List<defectAverangeTime> GetDefectsAverangeTime(string subproject, string delivery)
+        public List<defectAverangeTime> getDefectsAverangeTime(string subproject, string delivery)
         {
             string sql = @"
             select 
@@ -619,7 +620,7 @@ namespace projectJson.Controllers
 
         [HttpGet]
         [Route("defectsWrongClassif")]
-        public List<wrongClassif> GetWrongClassificationDefectRate()
+        public List<wrongClassif> getWrongClassificationDefectRate()
         {
             string sql = @"
                 select 
@@ -707,7 +708,7 @@ namespace projectJson.Controllers
 
         [HttpGet]
         [Route("defectsDetectableInDev")]
-        public List<detectableInDev> GetDetectableInDev()
+        public List<detectableInDev> getDetectableInDev()
         {
             string sql = @"
                 select 
@@ -774,7 +775,7 @@ namespace projectJson.Controllers
 
         [HttpGet]
         [Route("defectsDetectableInDev/{subproject}/{delivery}")]
-        public List<defectDetectableInDev> GetDetectableInDev(string subproject, string delivery)
+        public List<defectDetectableInDev> getDetectableInDev(string subproject, string delivery)
         {
             string sql = @"
                 select 
@@ -823,7 +824,83 @@ namespace projectJson.Controllers
             return List;
         }
 
+        [HttpGet]
+        [Route("defectDetail/{subproject}/{delivery}/{defect}")]
+        public List<defectDetail> getDefectDetailing(string subproject, string delivery, string defect)
+        {
+            string sql = @"
+            select 
+	            convert(varchar, cast(substring(Subprojeto,4,8) as int)) + ' ' + convert(varchar,cast(substring(Entrega,8,8) as int)) as project,
+	            subprojeto as subproject,
+	            entrega as delivery,
 
+	            Defeito as id,
+	            d.Nome as name,
+	            Ciclo as cycle,
+	            CT,
+	            Sistema_CT as ctSystem,
+                Sistema_Defeito as defectSystem,
+	            Fabrica_Desenvolvimento as devManuf,
+	            Fabrica_Teste as testManuf,
+	            Encaminhado_Para as forwardedTo,
+	            substring(Severidade,3,10) as severity,
+	            Origem as source,
+	            natureza as nature,
+                Status_Atual as status,
+
+                Dt_Inicial as dtOpening,
+	            Dt_Prevista_Solucao_Defeito as dtForecastingSolution,
+
+                erro_detectavel_em_desenvolvimento as detectableInDev,
+
+                Qtd_Reopen as qtyReopened,
+                Qtd_CTs_Impactados as qtyImpactedCTs,
+
+	            d.Ping_Pong as qtyPingPong,
+
+	            round(
+		            cast(
+			              (select Sum(Tempo_Util) 
+			               from ALM_Defeitos_Tempos dt WITH (NOLOCK)
+			               where dt.Subprojeto = d.Subprojeto and 
+			                     dt.Entrega = d.Entrega and 
+					             dt.Defeito = d.Defeito)
+		            as float ) / 60, 2
+	            ) as qtyBusinessHours,
+
+                (select top 1 novo_valor
+                from ALM_Historico_Alteracoes_Campos h WITH(NOLOCK)
+                    where
+                      h.subprojeto = d.subprojeto and
+                      h.entrega = d.entrega and
+                      h.tabela_id = d.Defeito and
+                      h.tabela = 'BUG' and
+                      h.campo = 'COMENTÁRIOS'
+                    order by
+                      convert(datetime, dt_alteracao, 5) desc) as Comments
+            from 
+	            ALM_Defeitos d WITH (NOLOCK)
+	            left join BITI_Subprojetos sp WITH (NOLOCK)
+		            on sp.id = d.subprojeto
+            where
+                subprojeto = '@subproject' and
+                entrega = '@delivery' and
+	            Defeito = @defect
+            ";
+            sql = sql.Replace("@subproject", subproject);
+            sql = sql.Replace("@delivery", delivery);
+            sql = sql.Replace("@defect", defect);
+
+
+
+
+            var Connection = new Connection(Bancos.Sgq);
+
+            List<defectDetail> List = Connection.Executar<defectDetail>(sql);
+
+            return List;
+        }
+        
 
         [HttpGet]
         [Route("defectsReopened")]
@@ -941,11 +1018,725 @@ namespace projectJson.Controllers
         }
 
 
+        [HttpGet]
+        [Route("defectsOpenInTestManuf/{subproject}/{delivery}")]
+        public List<defectsOpen> getDefectsOpenInTestManuf(string subproject, string delivery)
+        {
+            string sql = @"
+            select 
+	            convert(varchar, cast(substring(Subprojeto,4,8) as int)) + ' ' + convert(varchar,cast(substring(Entrega,8,8) as int)) as project,
+	            subprojeto as subproject,
+	            entrega as delivery,
+
+	            df.Defeito as defect,
+
+                case df.Status_Atual 
+                    when 'ON_RETEST' then 'On Retest'
+                    when 'PENDENT (RETEST)' then 'Pend.Retest'
+                    when 'REJECTED' then 'Reject'
+                    else 'Indefinido'
+                end as status,
+
+	            UPPER(LEFT(left(df.Encaminhado_Para,20),1))+LOWER(SUBSTRING(left(df.Encaminhado_Para,20),2,LEN(left(df.Encaminhado_Para,20)))) as forwardedTo,
+	            UPPER(LEFT(left(df.Sistema_Defeito,20),1))+LOWER(SUBSTRING(left(df.Sistema_Defeito,20),2,LEN(left(df.Sistema_Defeito,20)))) as defectSystem,
+	            UPPER(LEFT(substring(df.severidade,3,3),1))+LOWER(SUBSTRING(substring(df.severidade,3,3),2,LEN(substring(df.severidade,3,3)))) as severity,
+	            df.Aging as aging,
+                df.Ping_Pong as pingPong
+            from 
+	            ALM_Defeitos df WITH (NOLOCK)
+            where
+	            df.Status_Atual in ('ON_RETEST','PENDENT (RETEST)','REJECTED') and
+	            df.subprojeto = '@subproject' and
+	            df.entrega = '@delivery'
+            order by 
+                1
+            ";
+            sql = sql.Replace("@subproject", subproject);
+            sql = sql.Replace("@delivery", delivery);
+
+            var Connection = new Connection(Bancos.Sgq);
+
+            List<defectsOpen> List = Connection.Executar<defectsOpen>(sql);
+
+            return List;
+        }
+
+        [HttpGet]
+        [Route("defectsOpenInDevManuf/{subproject}/{delivery}")]
+        public List<defectsOpen> getDefectsOpenInDevManuf(string subproject, string delivery)
+        {
+            string sql = @"
+            select 
+	            convert(varchar, cast(substring(Subprojeto,4,8) as int)) + ' ' + convert(varchar,cast(substring(Entrega,8,8) as int)) as project,
+	            subprojeto as subproject,
+	            entrega as delivery,
+
+	            df.Defeito as defect,
+
+                case df.Status_Atual 
+                    when 'NEW' then 'New'
+                    when 'IN_PROGRESS' then 'In Progr.'
+                    when 'MIGRATE' then 'Migrate'
+                    when 'PENDENT (PROGRESS)' then 'Pend.Progr.'
+                    when 'REOPEN' then 'Reopen'
+                    else 'Indefinido'
+                end as status,
+
+	            UPPER(LEFT(left(df.Encaminhado_Para,20),1))+LOWER(SUBSTRING(left(df.Encaminhado_Para,20),2,LEN(left(df.Encaminhado_Para,20)))) as forwardedTo,
+	            UPPER(LEFT(left(df.Sistema_Defeito,20),1))+LOWER(SUBSTRING(left(df.Sistema_Defeito,20),2,LEN(left(df.Sistema_Defeito,20)))) as defectSystem,
+	            UPPER(LEFT(substring(severidade,3,3),1))+LOWER(SUBSTRING(substring(severidade,3,3),2,LEN(substring(severidade,3,3)))) as severity,
+	            df.Aging as aging,
+                df.Ping_Pong as pingPong
+            from 
+	            ALM_Defeitos df WITH (NOLOCK)
+            where
+	            df.Status_Atual in ('NEW','IN_PROGRESS','PENDENT (PROGRESS)','REOPEN','MIGRATE') and
+	            df.subprojeto = '@subproject' and
+	            df.entrega = '@delivery'
+            order by 
+                1
+            ";
+            sql = sql.Replace("@subproject", subproject);
+            sql = sql.Replace("@delivery", delivery);
+
+            var Connection = new Connection(Bancos.Sgq);
+
+            List<defectsOpen> List = Connection.Executar<defectsOpen>(sql);
+
+            return List;
+        }
+
+
+        [HttpGet]
+        [Route("defectsStatus/{subproject}/{delivery}")]
+        public List<defectsStatus> getDefectsStatus(string subproject, string delivery)
+        {
+            string sql = @"
+            select 
+	            name,
+	            qtyDefects,
+	            totalDefects,
+	            round(convert(float,qtyDefects) / (case when totalDefects <> 0 then totalDefects else 1 end) * 100,2) as [percent]
+            from
+	            (
+	            select 
+		            'Aberto-Fáb.Desen' as name,
+		            (select count(*) from ALM_Defeitos d WITH (NOLOCK)
+			            where d.subprojeto = '@subproject' and 
+				            d.Entrega = '@delivery' and 
+				            d.Status_Atual in ('ON_RETEST','PENDENT (RETEST)','REJECTED')
+		            ) as qtyDefects,
+		            (select count(*) from ALM_Defeitos d WITH (NOLOCK) where d.subprojeto = '@subproject' and d.Entrega = '@delivery') as totalDefects
+
+	            union all
+
+	            select 
+		            'Aberto-Fáb.Teste' as name,
+		            (select count(*) from ALM_Defeitos d WITH (NOLOCK)
+		             where d.subprojeto = '@subproject' and 
+				            d.Entrega = '@delivery' and 
+				            d.Status_Atual in ('NEW','IN_PROGRESS','PENDENT (PROGRESS)','REOPEN','MIGRATE')
+		            ) as qtyDefects,
+		            (select count(*) from ALM_Defeitos d WITH (NOLOCK) where d.subprojeto = '@subproject' and d.Entrega = '@delivery') as totalDefects
+
+	            union all
+
+	            select 
+		            'Fechado' as name,
+		            (select count(*) from ALM_Defeitos d WITH (NOLOCK)
+		             where d.subprojeto = '@subproject' and 
+				            d.Entrega = '@delivery' and 
+				            d.Status_Atual = 'CLOSED'
+		            ) as qtyDefects,
+		            (select count(*) from ALM_Defeitos d WITH (NOLOCK) where d.subprojeto = '@subproject' and d.Entrega = '@delivery') as totalDefects
+
+	            union all
+
+	            select 
+		            'Cancelado' as name,
+		            (select count(*) from ALM_Defeitos d WITH (NOLOCK)
+		             where d.subprojeto = '@subproject' and 
+				            d.Entrega = '@delivery' and 
+				            d.Status_Atual = 'CANCELLED'
+		            ) as qtyDefects,
+		            (select count(*) from ALM_Defeitos d WITH (NOLOCK) where d.subprojeto = '@subproject' and d.Entrega = '@delivery') as totalDefects
+	            ) aux
+            ";
+            sql = sql.Replace("@subproject", subproject);
+            sql = sql.Replace("@delivery", delivery);
+
+            var Connection = new Connection(Bancos.Sgq);
+
+            List<defectsStatus> List = Connection.Executar<defectsStatus>(sql);
+
+            return List;
+        }
+
+
+        [HttpGet]
+        [Route("defectsGroupOrigin/{subproject}/{delivery}")]
+        public List<defectsStatus> getDefectsGroupOrigin(string subproject, string delivery)
+        {
+            string sql = @"
+                select 
+	                UPPER(LEFT(name,1))+LOWER(SUBSTRING(name,2,LEN(name))) as name,
+	                qtyDefects,
+	                totalDefects,
+	                round(convert(float,qtyDefects) / (case when totalDefects <> 0 then totalDefects else 1 end) * 100,2) as [percent]
+                from
+	                (
+	                select 
+		                (case when Origem <> '' then Origem else 'INDEFINIDO' end) as name,
+		                count(*) as qtyDefects,
+		                (select 
+			                count(*)
+		                from 
+			                ALM_Defeitos d WITH (NOLOCK)
+		                where
+			                subprojeto = '@subproject' and
+			                entrega = '@delivery' and
+			                Status_Atual = 'CLOSED'
+		                ) as totalDefects
+	                from 
+		                ALM_Defeitos d WITH (NOLOCK)
+	                where
+		                subprojeto = '@subproject' and
+		                entrega = '@delivery' and
+		                Status_Atual = 'CLOSED'
+	                group by 
+		                Origem
+	                ) aux
+                order by
+	                2 desc
+            ";
+            sql = sql.Replace("@subproject", subproject);
+            sql = sql.Replace("@delivery", delivery);
+
+            var Connection = new Connection(Bancos.Sgq);
+
+            List<defectsStatus> List = Connection.Executar<defectsStatus>(sql);
+
+            return List;
+        }
+
+
+        [HttpGet]
+        [Route("statusGroupDay/{subproject}/{delivery}")]
+        public List<status> getStatusGroupDay(string subproject, string delivery)
+        {
+            string sql = @"
+            declare @t table (
+	            date varchar(8), 
+	            dateOrder varchar(8), 
+	            active int, 
+	            activeUAT int, 
+	            planned int, 
+	            realized int,
+	            productivity int,
+	            approvedTI int,
+	            approvedUAT int
+            )
+            insert into @t (
+	            date, 
+	            dateOrder,
+	            active, 
+	            activeUAT, 
+	            planned, 
+	            realized,
+	            productivity,
+	            approvedTI,
+	            approvedUAT
+            )
+	        select 
+		        date,
+		        substring(date,7,2)+substring(date,4,2)+substring(date,1,2) as dateOrder,
+		        sum(active) as active,
+		        sum(activeUAT) as activeUAT,
+		        sum(planned) as planned,
+		        sum(realized) as realized,
+		        sum(productivity) as productivity,
+		        sum(approvedTI) as approvedTI,
+		        sum(approvedUAT) as approvedUAT
+	        from
+		        (
+				select 
+					left(dt_criacao,8) as date, 
+					1 as active,
+					case when uat = 'SIM' then 1 else 0 end as activeUAT,
+					0 as planned,
+					0 as realized,
+					0 as productivity,
+					0 as approvedTI,
+					0 as approvedUAT
+				from ALM_CTs WITH (NOLOCK)
+				where 
+					subprojeto = '@subproject' and
+					entrega = '@delivery' and
+					Status_Exec_CT <> 'CANCELLED' and
+					dt_criacao <> ''
+
+				union all
+
+				select 
+					left(dt_planejamento,8) as date, 
+					0 as active,
+					0 as activeUAT,
+					1 as planned,
+					0 as realized,
+					0 as productivity,
+					0 as approvedTI,
+					0 as approvedUAT
+				from ALM_CTs WITH (NOLOCK)
+				where 
+					subprojeto = '@subproject' and
+					entrega = '@delivery' and
+					Status_Exec_CT <> 'CANCELLED' and
+					dt_planejamento <> ''
+
+				union all
+
+				select 
+					left(dt_execucao,8) as date,
+					0 as active,
+					0 as activeUAT,
+					0 as planned,
+					1 as realized,
+					0 as productivity,
+					0 as approvedTI,
+					0 as approvedUAT
+				from ALM_CTs WITH (NOLOCK)
+				where 
+					subprojeto = '@subproject' and
+					entrega = '@delivery' and
+					Status_Exec_CT = 'PASSED' and 
+					dt_execucao <> ''
+
+				union all
+
+				select 
+					left(dt_execucao,8) as date,
+					0 as active,
+					0 as activeUAT,
+					0 as planned,
+					0 as realized,
+					1 as productivity,
+					0 as approvedTI,
+					0 as approvedUAT
+				from alm_execucoes WITH (NOLOCK)
+				where 
+					subprojeto = '@subproject' and
+					entrega = '@delivery' and
+					-- status <> 'CANCELLED' and
+					status in ('PASSED', 'FAILED') and
+					dt_execucao <> ''
+
+				union all
+
+				select 
+					left((select top 1
+						dt_alteracao
+					from 
+						ALM_Historico_Alteracoes_Campos h
+					where 
+						h.subprojeto = cts.subprojeto and
+						h.entrega = cts.entrega and
+						h.tabela = 'TESTCYCL' and 
+						h.campo = '(EVIDÊNCIA) VALIDAÇÃO TÉCNICA' and
+						h.novo_valor = cts.Evidencia_Validacao_Tecnica
+					),8) as date,
+					0 as active,
+					0 as activeUAT,
+					0 as planned,
+					0 as realized,
+					0 as productivity,
+					1 as approvedTI,
+					0 as approvedUAT
+				from 
+					alm_cts cts WITH (NOLOCK)
+				where
+					subprojeto = '@subproject' and
+					entrega = '@delivery' and
+					Status_Exec_CT <> 'CANCELLED' and 
+					Evidencia_Validacao_Tecnica in ('VALIDADO', 'N/A', 'N/A - SOLICITAÇÃO PROJETO')
+
+				union all
+
+				select 
+					left((select top 1
+						dt_alteracao
+					from 
+						ALM_Historico_Alteracoes_Campos h
+					where 
+						h.subprojeto = cts.subprojeto and
+						h.entrega = cts.entrega and
+						h.tabela = 'TESTCYCL' and 
+						h.campo = '(EVIDÊNCIA) VALIDAÇÃO CLIENTE' and
+						h.novo_valor = cts.Evidencia_Validacao_Cliente
+					),8) as date,
+					0 as active,
+					0 as activeUAT,
+					0 as planned,
+					0 as realized,
+					0 as productivity,
+					0 as approvedTI,
+					1 as approvedUAT
+				from 
+					alm_cts cts WITH (NOLOCK)
+				where
+					subprojeto = '@subproject' and
+					entrega = '@delivery' and
+					Status_Exec_CT = 'PASSED' and 
+					UAT = 'SIM' and
+					Evidencia_Validacao_Cliente in ('VALIDADO', 'N/A', 'N/A - SOLICITAÇÃO PROJETO')
+		        ) Aux
+			group by
+				date
+			order by
+				2
+
+            select top 30
+	            convert(varchar, cast(substring('@subproject',4,8) as int)) + ' ' + convert(varchar,cast(substring('@delivery',8,8) as int)) as project,
+	            '@subproject' as subproject,
+	            '@delivery' as delivery,
+	            t.date,
+                t.dateOrder,
+	            t.active, 
+	            t.activeUAT, 
+	            t.planned, 
+	            t.realized,
+	            t.productivity,
+		        (case when t.realized > t.planned then 0 else t.planned - t.realized end) as GAP,
+	            t.approvedTI,
+	            t.approvedUAT,
+
+	            SUM(t2.active) as activeAcum,
+	            SUM(t2.activeUAT) as activeUATAcum,
+	            SUM(t2.planned) as plannedAcum,
+	            SUM(t2.realized) as realizedAcum,
+	            SUM(t2.productivity) as productivityAcum,
+		        (case when sum(t2.realized) > sum(t2.planned) then 0 else sum(t2.planned) - sum(t2.realized) end) as GAPAcum,
+	            SUM(t2.approvedTI) as approvedTIAcum,
+	            SUM(t2.approvedUAT) as approvedUATAcum,
+
+	            round(convert(float, SUM(t2.planned)) / (case when SUM(t2.active) <> 0 then SUM(t2.active) else 1 end) * 100,2) as percPlanned,
+
+	            round(convert(float, SUM(t2.realized)) / (case when SUM(t2.planned) <> 0 then SUM(t2.planned) else 1 end) * 100,2) as percRealized,
+
+	            round(convert(float, (case when sum(t2.realized) > sum(t2.planned) then 0 else sum(t2.planned) - sum(t2.realized) end)) / 
+									 (case when SUM(t2.planned) <> 0 then SUM(t2.planned) else 1 end) * 100,2) as percGAP,
+
+	            round(convert(float, SUM(t2.approvedTI)) / (case when SUM(t2.active) <> 0 then SUM(t2.active) else 1 end) * 100,2) as percApprovedTI,
+
+	            round(convert(float, SUM(t2.approvedUAT)) / (case when SUM(t2.activeUAT) <> 0 then SUM(t2.activeUAT) else 1 end) * 100,2) as percApprovedUAT
+            from 
+	            @t t inner join @t t2 
+	              on t.dateOrder >= t2.dateOrder
+            group by 
+	            t.dateOrder, 
+	            t.date,
+	            t.active, 
+	            t.activeUAT, 
+	            t.planned, 
+	            t.realized,
+	            t.productivity,
+	            t.approvedTI,
+	            t.approvedUAT
+            order by 
+	            t.dateOrder desc
+            ";
+            sql = sql.Replace("@subproject", subproject);
+            sql = sql.Replace("@delivery", delivery);
+
+            var Connection = new Connection(Bancos.Sgq);
+
+            List<status> List = Connection.Executar<status>(sql);
+
+            return List;
+        }
+
+        [HttpGet]
+        [Route("statusGroupMonth/{subproject}/{delivery}")]
+        public List<status> getStatusGroupMonth(string subproject, string delivery)
+        {
+            string sql = @"
+            declare @t table (
+	            date varchar(5), 
+	            dateOrder varchar(5), 
+	            active int, 
+	            activeUAT int, 
+	            planned int, 
+	            realized int,
+	            productivity int,
+	            approvedTI int,
+	            approvedUAT int
+            )
+            insert into @t (
+	            date, 
+	            dateOrder,
+	            active, 
+	            activeUAT, 
+	            planned, 
+	            realized,
+	            productivity,
+	            approvedTI,
+	            approvedUAT
+            )
+	        select 
+		        date,
+		        substring(date,4,2)+substring(date,1,2) as dateOrder,
+		        sum(active) as active,
+		        sum(activeUAT) as activeUAT,
+		        sum(planned) as planned,
+		        sum(realized) as realized,
+		        sum(productivity) as productivity,
+		        sum(approvedTI) as approvedTI,
+		        sum(approvedUAT) as approvedUAT
+	        from
+		        (
+				select 
+					substring(dt_criacao,4,5) as date, 
+					1 as active,
+					case when uat = 'SIM' then 1 else 0 end as activeUAT,
+					0 as planned,
+					0 as realized,
+					0 as productivity,
+					0 as approvedTI,
+					0 as approvedUAT
+				from ALM_CTs WITH (NOLOCK)
+				where 
+					subprojeto = '@subproject' and
+					entrega = '@delivery' and
+					Status_Exec_CT <> 'CANCELLED' and
+					dt_criacao <> ''
+
+				union all
+
+				select 
+					substring(dt_planejamento,4,5) as date, 
+					0 as active,
+					0 as activeUAT,
+					1 as planned,
+					0 as realized,
+					0 as productivity,
+					0 as approvedTI,
+					0 as approvedUAT
+				from ALM_CTs WITH (NOLOCK)
+				where 
+					subprojeto = '@subproject' and
+					entrega = '@delivery' and
+					Status_Exec_CT <> 'CANCELLED' and
+					dt_planejamento <> ''
+
+				union all
+
+				select 
+					substring(dt_execucao,4,5) as date, 
+					0 as active,
+					0 as activeUAT,
+					0 as planned,
+					1 as realized,
+					0 as productivity,
+					0 as approvedTI,
+					0 as approvedUAT
+				from ALM_CTs WITH (NOLOCK)
+				where 
+					subprojeto = '@subproject' and
+					entrega = '@delivery' and
+					Status_Exec_CT = 'PASSED' and 
+					dt_execucao <> ''
+
+				union all
+
+				select 
+					substring(dt_execucao,4,5) as date, 
+					0 as active,
+					0 as activeUAT,
+					0 as planned,
+					0 as realized,
+					1 as productivity,
+					0 as approvedTI,
+					0 as approvedUAT
+				from alm_execucoes WITH (NOLOCK)
+				where 
+					subprojeto = '@subproject' and
+					entrega = '@delivery' and
+					-- status <> 'CANCELLED' and
+					status in ('PASSED', 'FAILED') and
+					dt_execucao <> ''
+
+				union all
+
+				select 
+					substring((select top 1
+						dt_alteracao
+					from 
+						ALM_Historico_Alteracoes_Campos h
+					where 
+						h.subprojeto = cts.subprojeto and
+						h.entrega = cts.entrega and
+						h.tabela = 'TESTCYCL' and 
+						h.campo = '(EVIDÊNCIA) VALIDAÇÃO TÉCNICA' and
+						h.novo_valor = cts.Evidencia_Validacao_Tecnica
+					),4,5) as date,
+					0 as active,
+					0 as activeUAT,
+					0 as planned,
+					0 as realized,
+					0 as productivity,
+					1 as approvedTI,
+					0 as approvedUAT
+				from 
+					alm_cts cts WITH (NOLOCK)
+				where
+					subprojeto = '@subproject' and
+					entrega = '@delivery' and
+					Status_Exec_CT <> 'CANCELLED' and 
+					Evidencia_Validacao_Tecnica in ('VALIDADO', 'N/A', 'N/A - SOLICITAÇÃO PROJETO')
+
+				union all
+
+				select 
+					substring((select top 1
+						dt_alteracao
+					from 
+						ALM_Historico_Alteracoes_Campos h
+					where 
+						h.subprojeto = cts.subprojeto and
+						h.entrega = cts.entrega and
+						h.tabela = 'TESTCYCL' and 
+						h.campo = '(EVIDÊNCIA) VALIDAÇÃO CLIENTE' and
+						h.novo_valor = cts.Evidencia_Validacao_Cliente
+					),4,5) as date,
+					0 as active,
+					0 as activeUAT,
+					0 as planned,
+					0 as realized,
+					0 as productivity,
+					0 as approvedTI,
+					1 as approvedUAT
+				from 
+					alm_cts cts WITH (NOLOCK)
+				where
+					subprojeto = '@subproject' and
+					entrega = '@delivery' and
+					Status_Exec_CT = 'PASSED' and 
+					UAT = 'SIM' and
+					Evidencia_Validacao_Cliente in ('VALIDADO', 'N/A', 'N/A - SOLICITAÇÃO PROJETO')
+		        ) Aux
+			group by
+				date
+			order by
+				2
+
+            select
+	            convert(varchar, cast(substring('@subproject',4,8) as int)) + ' ' + convert(varchar,cast(substring('@delivery',8,8) as int)) as project,
+	            '@subproject' as subproject,
+	            '@delivery' as delivery,
+	            t.date, 
+	            t.dateOrder, 
+	            t.active, 
+	            t.activeUAT, 
+	            t.planned, 
+	            t.realized,
+	            t.productivity,
+		        (case when t.realized > t.planned then 0 else t.planned - t.realized end) as GAP,
+	            t.approvedTI,
+	            t.approvedUAT,
+
+	            SUM(t2.active) as activeAcum,
+	            SUM(t2.activeUAT) as activeUATAcum,
+	            SUM(t2.planned) as plannedAcum,
+	            SUM(t2.realized) as realizedAcum,
+	            SUM(t2.productivity) as productivityAcum,
+		        (case when sum(t2.realized) > sum(t2.planned) then 0 else sum(t2.planned) - sum(t2.realized) end) as GAPAcum,
+	            SUM(t2.approvedTI) as approvedTIAcum,
+	            SUM(t2.approvedUAT) as approvedUATAcum,
+
+	            round(convert(float, SUM(t2.planned)) / (case when SUM(t2.active) <> 0 then SUM(t2.active) else 1 end) * 100,2) as percPlanned,
+
+	            round(convert(float, SUM(t2.realized)) / (case when SUM(t2.planned) <> 0 then SUM(t2.planned) else 1 end) * 100,2) as percRealized,
+
+	            round(convert(float, (case when sum(t2.realized) > sum(t2.planned) then 0 else sum(t2.planned) - sum(t2.realized) end)) / 
+									 (case when SUM(t2.planned) <> 0 then SUM(t2.planned) else 1 end) * 100,2) as percGAP,
+
+	            round(convert(float, SUM(t2.approvedTI)) / (case when SUM(t2.active) <> 0 then SUM(t2.active) else 1 end) * 100,2) as percApprovedTI,
+
+	            round(convert(float, SUM(t2.approvedUAT)) / (case when SUM(t2.activeUAT) <> 0 then SUM(t2.activeUAT) else 1 end) * 100,2) as percApprovedUAT
+            from 
+	            @t t inner join @t t2 
+	              on t.dateOrder >= t2.dateOrder
+            group by 
+	            t.dateOrder, 
+	            t.date,
+	            t.active, 
+	            t.activeUAT, 
+	            t.planned, 
+	            t.realized,
+	            t.productivity,
+	            t.approvedTI,
+	            t.approvedUAT
+            order by 
+	            t.dateOrder
+            ";
+            sql = sql.Replace("@subproject", subproject);
+            sql = sql.Replace("@delivery", delivery);
+
+            var Connection = new Connection(Bancos.Sgq);
+
+            List<status> List = Connection.Executar<status>(sql);
+
+            return List;
+        }
+
+
+        [HttpGet]
+        [Route("ctsImpactedByDefects/{subproject}/{delivery}")]
+        public List<ctsImpactedByDefects> getCtsImpactedByDefects(string subproject, string delivery)
+        {
+            string sql = @"
+            select
+	            date,
+	            UPPER(LEFT(name,1))+LOWER(SUBSTRING(name,2,LEN(name))) as name,
+	            sum(Qtd_CTs_Impactados) as qtyCtsImpacted,
+	            sum(Qtd_Defeitos) as qtyDefects
+            from
+	            (
+	            select 
+		            substring(dt_inicial,1,8) as date,
+		            substring(dt_inicial,7,2) + substring(dt_inicial,4,2) + substring(dt_inicial,1,2) as dateOrder,
+		            (case when Origem <> '' then Origem else 'INDEFINIDO' end) as name,
+		            Qtd_CTs_Impactados,
+		            1 as Qtd_Defeitos
+	            from 
+		            alm_defeitos
+	            where
+		            subprojeto = '@subproject' and
+		            entrega = '@delivery' and
+		            status_atual not in ('CLOSED', 'CANCELLED') and
+		            dt_inicial <> ''
+	            ) aux
+            group by 
+	            date,
+	            dateOrder,
+	            name
+            order by 
+	            dateOrder,
+	            name
+            ";
+            sql = sql.Replace("@subproject", subproject);
+            sql = sql.Replace("@delivery", delivery);
+
+            var Connection = new Connection(Bancos.Sgq);
+
+            List<ctsImpactedByDefects> List = Connection.Executar<ctsImpactedByDefects>(sql);
+
+            return List;
+        }
 
         /*
         [HttpGet]
         [Route("ReincidenciaDefeitos")]
-        public List<recurrenceDefects> GetRecurrenceDefects()
+        public List<recurrenceDefects> getRecurrenceDefects()
         {
             string sql = @"
       	          select 
@@ -994,7 +1785,7 @@ namespace projectJson.Controllers
 
         [HttpGet]
         [Route("defectsNoPrediction")]
-        public List<noPredictionDefects> GetnoPredictionDefects()
+        public List<noPredictionDefects> getnoPredictionDefects()
         {
             string sql = @"
                 select
@@ -1049,6 +1840,218 @@ namespace projectJson.Controllers
 
 
 
+        /* PEDRO */
+
+        [HttpGet]
+        [Route("bptReleases")]
+        public List<bptReleases> getReleases()
+        {
+            string sql = @"
+                select distinct 
+	                (select nome from SGQ_Meses where id = release_mes) + '-' + convert(varchar,release_ano) as id,
+	                (select nome from SGQ_Meses where id = release_mes) + '-' + convert(varchar,release_ano) as name,
+	                convert(varchar,release_ano) as year,
+	                (select Id from SGQ_Meses where id = release_mes) as month
+                from 
+	                sgq_releases_entregas
+                order by 
+                    3 desc, 
+                    4 desc
+            ";
+
+            var Connection = new Connection(Bancos.Sgq);
+
+            List<bptReleases> ListRelease = Connection.Executar<bptReleases>(sql);
+
+            return ListRelease;
+        }
+
+        [HttpGet]
+        [Route("bptProjects")]
+        public List<bptProjects> getBptProjects()
+        {
+            string sql = @"
+                select 'AUTOM_LINK2_ENTREGA' as id, 'MARÇO-2017' as release, 'ESPECIAL' as type, 'AUTOM_LINK2_ENTREGA' as name
+                union
+                select 'AUTOM_LINK2_1' as id, 'MARÇO-2017' as release, 'ESPECIAL' as type, 'AUTOM_LINK2_1' as name
+                union
+                select 'AUTOM_LINK2_2' as id, 'MARÇO-2017' as release, 'RELEASE' as type, 'AUTOM_LINK2_2' as name
+                union
+                select 'AUTOM_LINK2_3' as id, 'MARÇO-2017' as release, 'RELEASE' as type, 'AUTOM_LINK2_3' as name
+                union
+                select 'AUTOM_LINK2_4' as id, 'JANEIRO-2017' as release, 'RELEASE' as type, 'AUTOM_LINK2_4' as name
+                union
+                select 'AUTOM_LINK2_5' as id, 'JANEIRO-2017' as release, 'RELEASE' as type, 'AUTOM_LINK2_5' as name
+                union
+                select 'AUTOM_LINK2_6' as id, 'JANEIRO-2017' as release, 'RELEASE' as type, 'AUTOM_LINK2_6' as name
+            ";
+
+            var Connection = new Connection(Bancos.Sgq);
+
+            List<bptProjects> ListProjects = Connection.Executar<bptProjects>(sql);
+
+            return ListProjects;
+        }
+
+        [HttpGet]
+        [Route("bptBpts")]
+        public List<bptBpts> getBptBpts()
+
+        {
+            string sql = @"
+               select distinct
+		                b.name as id,
+                        b.idBpt,
+                        a.release,
+                        a.classification, 
+                        a.project, 
+                        b.name,
+                        b.system,
+                        b.status
+                from
+
+                        (select 'AUTOM_LINK2_ENTREGA' as id, 'MARÇO-2017' as release, 'ESPECIAL' as classification, 'AUTOM_LINK2_ENTREGA' as project
+		                 union
+		                 select 'AUTOM_LINK2_1' as id, 'MARÇO-2017' as release, 'ESPECIAL' as classification, 'AUTOM_LINK2_1' as project
+		                 union
+		                 select 'AUTOM_LINK2_2' as id, 'MARÇO-2017' as release, 'RELEASE' as classification, 'AUTOM_LINK2_2' as project
+		                 union
+		                 select 'AUTOM_LINK2_3' as id, 'MARÇO-2017' as release, 'RELEASE' as classification, 'AUTOM_LINK2_3' as project
+		                 union
+		                 select 'AUTOM_LINK2_4' as id, 'JANEIRO-2017' as release, 'RELEASE' as classification, 'AUTOM_LINK2_4' as project
+		                 union
+		                 select 'AUTOM_LINK2_5' as id, 'JANEIRO-2017' as release, 'RELEASE' as classification, 'AUTOM_LINK2_5' as project
+		                 union
+		                 select 'AUTOM_LINK2_6' as id, 'JANEIRO-2017' as release, 'RELEASE' as classification, 'AUTOM_LINK2_6' as project) a
+                        join
+                        (select distinct
+				                Id as idBpt, 
+                                Subprojeto +'_'+ Entrega as project, 
+                                Nome as name, 
+                                Sistema as system, 
+                                Status_Execucao as status
+                         from 
+                                BPT_Tests) b
+                        on a.project = b.project
+                order by
+                        a.release desc,
+                        a.classification,
+                        a.project,
+                        b.name                  
+            ";
+
+            var Connection = new Connection(Bancos.Sgq);
+
+            List<bptBpts> ListBpts = Connection.Executar<bptBpts>(sql);
+
+            return ListBpts;
+        }
+
+        [HttpGet]
+        [Route("bptValidPlanoEvid")]
+        public List<bptValidPlanoEvid> getBptPlanoValidEvid()
+        {
+            string sql = @"
+               select distinct
+	                z.id,
+	                y.release,
+	                y.classification,
+	                y.name,
+	                z.bpt,
+ 	                z.plano_val_tecnica,
+ 	                z.plano_motiv_rej_tec,
+ 	                z.plano_comentarios_rej_tec,
+ 	                z.plano_val_cliente,
+ 	                z.plano_motiv_rej_cliente,
+ 	                z.plano_comentarios_rej_cliente,
+ 	                z.evidencia_val_tecnica,
+ 	                z.evidencia_motiv_rej_tec,
+ 	                z.evidencia_comentarios_rej_tec,
+ 	                z.evidencia_val_cliente,
+ 	                z.evidencia_motiv_rej_cliente,
+ 	                z.evidencia_comentarios_rej_cliente,
+ 	                z.components
+                from
+	                (select 'AUTOM_LINK2_ENTREGA' as id, 'MARÇO-2017' as release, 'ESPECIAL' as classification, 'AUTOM_LINK2_ENTREGA' as name
+	                 union
+	                 select 'AUTOM_LINK2_1' as id, 'MARÇO-2017' as release, 'ESPECIAL' as classification, 'AUTOM_LINK2_1' as name
+	                 union
+	                 select 'AUTOM_LINK2_2' as id, 'MARÇO-2017' as release, 'RELEASE' as classification, 'AUTOM_LINK2_2' as name
+	                 union
+	                 select 'AUTOM_LINK2_3' as id, 'MARÇO-2017' as release, 'RELEASE' as classification, 'AUTOM_LINK2_3' as name
+	                 union
+	                 select 'AUTOM_LINK2_4' as id, 'JANEIRO-2017' as release, 'RELEASE' as classification, 'AUTOM_LINK2_4' as name
+	                 union
+	                 select 'AUTOM_LINK2_5' as id, 'JANEIRO-2017' as release, 'RELEASE' as classification, 'AUTOM_LINK2_5' as name
+	                 union
+	                 select 'AUTOM_LINK2_6' as id, 'JANEIRO-2017' as release, 'RELEASE' as classification, 'AUTOM_LINK2_6' as name) y
+	                join
+	                (select distinct
+ 		                a.subprojeto + '_' + a.entrega id,
+ 		                a.subprojeto + '_' + a.entrega project,
+ 		                a.test_id,
+ 		                e.nome as bpt,
+ 		                a.plano_val_tecnica,
+ 		                a.plano_motiv_rej_tec,
+ 		                a.plano_comentarios_rej_tec,
+ 		                a.plano_val_cliente,
+ 		                a.plano_motiv_rej_cliente,
+ 		                a.plano_comentarios_rej_cliente,
+ 		                a.evidencia_val_tecnica,
+ 		                a.evidencia_motiv_rej_tec,
+ 		                a.evidencia_comentarios_rej_tec,
+ 		                a.evidencia_val_cliente,
+ 		                a.evidencia_motiv_rej_cliente,
+ 		                a.evidencia_comentarios_rej_cliente,
+ 		                stuff(( select ', ' + convert(varchar,d.nome)
+ 				                from bpt_tests_to_components c inner join bpt_components d on c.component_id = d.id
+ 				                where a.test_id = c.test_id and b.test_id = c.test_id for xml path('')),1 ,1, '') components	
+	                 from 
+ 		                ((bpt_test_instances a inner join bpt_tests_cycle b 
+ 			                on a.test_id = b.test_id and a.test_instance_id = b.id)
+ 				                inner join bpt_tests e
+ 					                on a.test_id = e.id)) z
+	                on z.id = y.id 		
+                order by	
+	                y.release desc,
+	                z.id                  
+                ";
+
+            var Connection = new Connection(Bancos.Sgq);
+
+            List<bptValidPlanoEvid> ListValidPlanoEvid = Connection.Executar<bptValidPlanoEvid>(sql);
+
+            return ListValidPlanoEvid;
+        }
+
+        [HttpGet]
+        [Route("bptCadastroStatus")]
+        public List<bptCadastroStatus> getBptCadastroStatus()
+        {
+            string sql = @"
+                select 'AUTOM_LINK2_ENTREGA' as id, 'MARÇO-2017' as release, 'ESPECIAL' as classification, 'AUTOM_LINK2_ENTREGA' as name, 'farol' as farol, 'causa raiz' as causaraiz, 'plano de ação' as planoacao, 'informativo' as informativo, 'pontos de atenção' as pontoatencao, 'pontos atenção dos indicadores' as pontosatencaoindicadores
+                union
+                select 'AUTOM_LINK2_1' as id, 'MARÇO-2017' as release, 'ESPECIAL' as classification, 'AUTOM_LINK2_1' as name, 'farol' as farol, 'causa raiz' as causaraiz, 'plano de ação' as planoacao, 'informativo' as informativo, 'pontos de atenção' as pontoatencao, 'pontos atenção dos indicadores' as pontosatencaoindicadores
+                union
+                select 'AUTOM_LINK2_2' as id, 'MARÇO-2017' as release, 'RELEASE' as classification, 'AUTOM_LINK2_2' as name, 'faro' as farol, 'causa raiz' as causaraiz, 'plano de ação' as planoacao, 'informativo' as informativo, 'pontos de atenção' as pontoatencao, 'pontos atenção dos indicadores' as pontosatencaoindicadores
+                union
+                select 'AUTOM_LINK2_3' as id, 'MARÇO-2017' as release, 'RELEASE' as classification, 'AUTOM_LINK2_3' as name, 'faro' as farol, 'causa raiz' as causaraiz, 'plano de ação' as planoacao, 'informativo' as informativo, 'pontos de atenção' as pontoatencao, 'pontos atenção dos indicadores' as pontosatencaoindicadores
+                union
+                select 'AUTOM_LINK2_4' as id, 'JANEIRO-2017' as release, 'RELEASE' as classification, 'AUTOM_LINK2_4' as name, 'faro' as farol, 'causa raiz' as causaraiz, 'plano de ação' as planoacao, 'informativo' as informativo, 'pontos de atenção' as pontoatencao, 'pontos atenção dos indicadores' as pontosatencaoindicadores
+                union
+                select 'AUTOM_LINK2_5' as id, 'JANEIRO-2017' as release, 'RELEASE' as classification, 'AUTOM_LINK2_5' as name, 'faro' as farol, 'causa raiz' as causaraiz, 'plano de ação' as planoacao, 'informativo' as informativo, 'pontos de atenção' as pontoatencao, 'pontos atenção dos indicadores' as pontosatencaoindicadores
+                union
+                select 'AUTOM_LINK2_6' as id, 'JANEIRO-2017' as release, 'RELEASE' as classification, 'AUTOM_LINK2_6' as name, 'faro' as farol, 'causa raiz' as causaraiz, 'plano de ação' as planoacao, 'informativo' as informativo, 'pontos de atenção' as pontoatencao, 'pontos atenção dos indicadores' as pontosatencaoindicadores                 
+                ";
+
+            var Connection = new Connection(Bancos.Sgq);
+
+            List<bptCadastroStatus> ListCadastroStatus = Connection.Executar<bptCadastroStatus>(sql);
+
+            return ListCadastroStatus;
+        }
+
+        /* PEDRO */
 
 
         // POST: api/Pessoa
