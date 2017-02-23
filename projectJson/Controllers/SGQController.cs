@@ -58,8 +58,8 @@ namespace projectJson.Controllers
             ";
 
             var Connection = new Connection(Bancos.Sgq);
-
             List<devManufacturers> ListDevManufacturers = Connection.Executar<devManufacturers>(sql);
+            Connection.Dispose();
 
             //DataTable.AsEnumerable().Select(x => x[0].ToString()).ToList();
             return ListDevManufacturers;
@@ -104,8 +104,8 @@ namespace projectJson.Controllers
             ";
 
             var Connection = new Connection(Bancos.Sgq);
-
             List<systems> ListSystems = Connection.Executar<systems>(sql);
+            Connection.Dispose();
 
             return ListSystems;
         }
@@ -180,8 +180,8 @@ namespace projectJson.Controllers
 	                re.release_mes
                 ";
             var Connection = new Connection(Bancos.Sgq);
-
             List<projects> ListProjects = Connection.Executar<projects>(sql);
+            Connection.Dispose();
 
             return ListProjects;
         }
@@ -229,9 +229,10 @@ namespace projectJson.Controllers
                     sgq_projetos.subprojeto, 
                     sgq_projetos.entrega
                 ";
-            var Connection = new Connection(Bancos.Sgq);
 
+            var Connection = new Connection(Bancos.Sgq);
             List<project> ListProjects = Connection.Executar<project>(sql);
+            Connection.Dispose();
 
             return ListProjects;
         }
@@ -273,12 +274,14 @@ namespace projectJson.Controllers
                     int i = command.ExecuteNonQuery();
                     resultado = i > 0;
                 }
+                connection.Dispose();
                 return Request.CreateResponse(HttpStatusCode.OK, resultado);
             }
             catch (Exception ex)
             {
                 return Request.CreateResponse(HttpStatusCode.BadRequest, ex.Message);
             }
+
         }
 
 
@@ -304,8 +307,8 @@ namespace projectJson.Controllers
             sql = sql.Replace("@delivery", delivery);
 
             var Connection = new Connection(Bancos.Sgq);
-
             List<iteration> List = Connection.Executar<iteration>(sql);
+            Connection.Dispose();
 
             return List;
         }
@@ -382,8 +385,8 @@ namespace projectJson.Controllers
             ";
 
             var Connection = new Connection(Bancos.Sgq);
-
             List<densityDefects> List = Connection.Executar<densityDefects>(sql);
+            Connection.Dispose();
 
             return List;
         }
@@ -454,8 +457,8 @@ namespace projectJson.Controllers
             sql = sql.Replace("@delivery", delivery);
 
             var Connection = new Connection(Bancos.Sgq);
-
             List<densityDefects> List = Connection.Executar<densityDefects>(sql);
+            Connection.Dispose();
 
             return List;
         }
@@ -561,8 +564,8 @@ namespace projectJson.Controllers
             ";
 
             var Connection = new Connection(Bancos.Sgq);
-
             List<agingMedioDefects> List = Connection.Executar<agingMedioDefects>(sql);
+            Connection.Dispose();
 
             return List;
         }
@@ -611,8 +614,8 @@ namespace projectJson.Controllers
             sql = sql.Replace("@delivery", delivery);
 
             var Connection = new Connection(Bancos.Sgq);
-
             List<defectAverangeTime> List = Connection.Executar<defectAverangeTime>(sql);
+            Connection.Dispose();
 
             return List;
         }
@@ -698,8 +701,8 @@ namespace projectJson.Controllers
             ";
 
             var Connection = new Connection(Bancos.Sgq);
-
             List<wrongClassif> List = Connection.Executar<wrongClassif>(sql);
+            Connection.Dispose();
 
             return List;
         }
@@ -767,8 +770,8 @@ namespace projectJson.Controllers
             ";
 
             var Connection = new Connection(Bancos.Sgq);
-
             List<detectableInDev> List = Connection.Executar<detectableInDev>(sql);
+            Connection.Dispose();
 
             return List;
         }
@@ -818,15 +821,15 @@ namespace projectJson.Controllers
             sql = sql.Replace("@delivery", delivery);
 
             var Connection = new Connection(Bancos.Sgq);
-
             List<defectDetectableInDev> List = Connection.Executar<defectDetectableInDev>(sql);
+            Connection.Dispose();
 
             return List;
         }
 
         [HttpGet]
         [Route("defectDetail/{subproject}/{delivery}/{defect}")]
-        public List<defectDetail> getDefectDetailing(string subproject, string delivery, string defect)
+        public defectDetail getDefectDetailing(string subproject, string delivery, string defect)
         {
             string sql = @"
             select 
@@ -847,6 +850,13 @@ namespace projectJson.Controllers
 	            Origem as source,
 	            natureza as nature,
                 Status_Atual as status,
+				
+				sgqD.auditStatus,
+				sgqD.week,
+				sgqD.release,
+				sgqD.offender,
+				sgqD.ruleInfringed,
+				sgqD.trafficLight,
 
                 Dt_Inicial as dtOpening,
 	            Dt_Prevista_Solucao_Defeito as dtForecastingSolution,
@@ -858,15 +868,17 @@ namespace projectJson.Controllers
 
 	            d.Ping_Pong as qtyPingPong,
 
-	            round(
-		            cast(
-			              (select Sum(Tempo_Util) 
-			               from ALM_Defeitos_Tempos dt WITH (NOLOCK)
-			               where dt.Subprojeto = d.Subprojeto and 
-			                     dt.Entrega = d.Entrega and 
-					             dt.Defeito = d.Defeito)
-		            as float ) / 60, 2
-	            ) as qtyBusinessHours,
+      	       --round(
+		           -- cast(
+			          --    (select Sum(Tempo_Util) 
+			          --     from ALM_Defeitos_Tempos dt WITH (NOLOCK)
+			          --     where dt.Subprojeto = d.Subprojeto and 
+			          --           dt.Entrega = d.Entrega and 
+					        --     dt.Defeito = d.Defeito)
+		           -- as float ) / 60, 2
+	            --) as qtyBusinessHours,
+
+                d.aging,
 
                 (select top 1 novo_valor
                 from ALM_Historico_Alteracoes_Campos h WITH(NOLOCK)
@@ -882,23 +894,28 @@ namespace projectJson.Controllers
 	            ALM_Defeitos d WITH (NOLOCK)
 	            left join BITI_Subprojetos sp WITH (NOLOCK)
 		            on sp.id = d.subprojeto
+	            left join sgqDefects sgqD WITH (NOLOCK)
+		            on sgqD.subproject = d.subprojeto and
+		               sgqD.delivery = d.entrega and
+		               sgqD.id = d.Defeito
+
             where
                 subprojeto = '@subproject' and
                 entrega = '@delivery' and
 	            Defeito = @defect
+                --subprojeto = '@subproject' and
+                --entrega = '@delivery' and
+	            --Defeito = 63
             ";
             sql = sql.Replace("@subproject", subproject);
             sql = sql.Replace("@delivery", delivery);
             sql = sql.Replace("@defect", defect);
 
-
-
-
             var Connection = new Connection(Bancos.Sgq);
-
             List<defectDetail> List = Connection.Executar<defectDetail>(sql);
+            Connection.Dispose();
 
-            return List;
+            return List[0];
         }
         
 
@@ -951,8 +968,8 @@ namespace projectJson.Controllers
             ";
 
             var Connection = new Connection(Bancos.Sgq);
-
             List<reopenedDefects> List = Connection.Executar<reopenedDefects>(sql);
+            Connection.Dispose();
 
             return List;
         }
@@ -1011,8 +1028,8 @@ namespace projectJson.Controllers
             sql = sql.Replace("@delivery", delivery);
 
             var Connection = new Connection(Bancos.Sgq);
-
             List<defectReopened> List = Connection.Executar<defectReopened>(sql);
+            Connection.Dispose();
 
             return List;
         }
@@ -1055,8 +1072,8 @@ namespace projectJson.Controllers
             sql = sql.Replace("@delivery", delivery);
 
             var Connection = new Connection(Bancos.Sgq);
-
             List<defectsOpen> List = Connection.Executar<defectsOpen>(sql);
+            Connection.Dispose();
 
             return List;
         }
@@ -1100,8 +1117,8 @@ namespace projectJson.Controllers
             sql = sql.Replace("@delivery", delivery);
 
             var Connection = new Connection(Bancos.Sgq);
-
             List<defectsOpen> List = Connection.Executar<defectsOpen>(sql);
+            Connection.Dispose();
 
             return List;
         }
@@ -1166,8 +1183,8 @@ namespace projectJson.Controllers
             sql = sql.Replace("@delivery", delivery);
 
             var Connection = new Connection(Bancos.Sgq);
-
             List<defectsStatus> List = Connection.Executar<defectsStatus>(sql);
+            Connection.Dispose();
 
             return List;
         }
@@ -1213,8 +1230,8 @@ namespace projectJson.Controllers
             sql = sql.Replace("@delivery", delivery);
 
             var Connection = new Connection(Bancos.Sgq);
-
             List<defectsStatus> List = Connection.Executar<defectsStatus>(sql);
+            Connection.Dispose();
 
             return List;
         }
@@ -1291,6 +1308,7 @@ namespace projectJson.Controllers
 					subprojeto = '@subproject' and
 					entrega = '@delivery' and
 					Status_Exec_CT <> 'CANCELLED' and
+					substring(dt_planejamento,7,2) + substring(dt_planejamento,4,2) + substring(dt_planejamento,1,2) <= convert(varchar(6), getdate(), 12) and
 					dt_planejamento <> ''
 
 				union all
@@ -1448,8 +1466,8 @@ namespace projectJson.Controllers
             sql = sql.Replace("@delivery", delivery);
 
             var Connection = new Connection(Bancos.Sgq);
-
             List<status> List = Connection.Executar<status>(sql);
+            Connection.Dispose();
 
             return List;
         }
@@ -1525,6 +1543,7 @@ namespace projectJson.Controllers
 					subprojeto = '@subproject' and
 					entrega = '@delivery' and
 					Status_Exec_CT <> 'CANCELLED' and
+					substring(dt_planejamento,7,2) + substring(dt_planejamento,4,2) + substring(dt_planejamento,1,2) <= convert(varchar(6), getdate(), 12) and
 					dt_planejamento <> ''
 
 				union all
@@ -1682,29 +1701,56 @@ namespace projectJson.Controllers
             sql = sql.Replace("@delivery", delivery);
 
             var Connection = new Connection(Bancos.Sgq);
-
             List<status> List = Connection.Executar<status>(sql);
+            Connection.Dispose();
 
             return List;
         }
 
 
         [HttpGet]
-        [Route("ctsImpactedByDefects/{subproject}/{delivery}")]
-        public List<ctsImpactedByDefects> getCtsImpactedByDefects(string subproject, string delivery)
+        [Route("ctsImpactedXDefects/{subproject}/{delivery}")]
+        public List<ctsImpactedXDefects> getCtsImpactedXDefects(string subproject, string delivery)
         {
             string sql = @"
+            declare @t table (
+	            subproject varchar(30),
+	            delivery varchar(30),
+	            date varchar(8), 
+	            dateOrder varchar(8), 
+	            qtyDefectsAmb int, 
+	            qtyDefectsCons int, 
+	            qtyDefectsTot int,
+	            qtyCtsImpacted int
+            )
+
+            insert into @t (
+	            subproject,
+	            delivery,
+	            date, 
+	            dateOrder,
+	            qtyDefectsAmb,
+	            qtyDefectsCons,
+	            qtyDefectsTot,
+	            qtyCtsImpacted
+            )            
             select
+	            subproject,
+	            delivery,
 	            date,
-	            UPPER(LEFT(name,1))+LOWER(SUBSTRING(name,2,LEN(name))) as name,
-	            sum(Qtd_CTs_Impactados) as qtyCtsImpacted,
-	            sum(Qtd_Defeitos) as qtyDefects
+	            substring(date,7,2)+substring(date,4,2)+substring(date,1,2) as dateOrder,
+	            sum(case when name = 'AMBIENTE' then Qtd_Defeitos else 0 end) as qtyDefectsAmb,
+	            sum(case when name = 'CONSTRUÇÃO' then Qtd_Defeitos else 0 end) as qtyDefectsCons,
+	            sum(Qtd_Defeitos) as qtyDefectsTot,
+	            sum(Qtd_CTs_Impactados) as qtyCtsImpacted
             from
 	            (
 	            select 
+		            subprojeto as subproject,
+		            entrega as delivery,
 		            substring(dt_inicial,1,8) as date,
 		            substring(dt_inicial,7,2) + substring(dt_inicial,4,2) + substring(dt_inicial,1,2) as dateOrder,
-		            (case when Origem <> '' then Origem else 'INDEFINIDO' end) as name,
+		            Origem as name,
 		            Qtd_CTs_Impactados,
 		            1 as Qtd_Defeitos
 	            from 
@@ -1713,25 +1759,356 @@ namespace projectJson.Controllers
 		            subprojeto = '@subproject' and
 		            entrega = '@delivery' and
 		            status_atual not in ('CLOSED', 'CANCELLED') and
+		            Origem in ('AMBIENTE','CONSTRUÇÃO') and
 		            dt_inicial <> ''
 	            ) aux
             group by 
+	            subproject,
+	            delivery,
 	            date,
-	            dateOrder,
-	            name
+	            dateOrder
             order by 
-	            dateOrder,
-	            name
+	            dateOrder
+
+            select
+	            convert(varchar, cast(substring('@subproject',4,8) as int)) + ' ' + convert(varchar,cast(substring('@delivery',8,8) as int)) as project,
+	            '@subproject' as subproject,
+	            '@delivery' as delivery,
+	            t.date,
+	            t.qtyDefectsAmb, 
+	            t.qtyDefectsCons, 
+	            t.qtyDefectsTot, 
+	            t.qtyCtsImpacted, 
+
+	            SUM(t2.qtyDefectsAmb) as qtyDefectsAmbAcum,
+	            SUM(t2.qtyDefectsCons) as qtyDefectsConsAcum,
+	            SUM(t2.qtyDefectsTot) as qtyDefectsTotAcum,
+	            SUM(t2.qtyCtsImpacted) as qtyCtsImpactedAcum
+            from 
+	            @t t 
+	            inner join @t t2 
+	              on t.dateOrder >= t2.dateOrder
+            group by 
+	            t.date,
+	            t.dateOrder,
+	            t.qtyDefectsAmb, 
+	            t.qtyDefectsCons, 
+	            t.qtyDefectsTot, 
+	            t.qtyCtsImpacted
+            order by
+	            t.dateOrder
             ";
             sql = sql.Replace("@subproject", subproject);
             sql = sql.Replace("@delivery", delivery);
 
             var Connection = new Connection(Bancos.Sgq);
-
-            List<ctsImpactedByDefects> List = Connection.Executar<ctsImpactedByDefects>(sql);
+            List<ctsImpactedXDefects> List = Connection.Executar<ctsImpactedXDefects>(sql);
+            Connection.Dispose();
 
             return List;
         }
+
+
+        [HttpGet]
+        [Route("productivityXDefects/{subproject}/{delivery}")]
+        public List<productivityXDefects> getProductivityXDefects(string subproject, string delivery)
+        {
+            string sql = @"
+            declare @t table (
+	            date varchar(8), 
+	            dateOrder varchar(8), 
+	            productivity int,
+	            realized int,
+	            qtyDefectsAmb int,
+	            qtyDefectsCons int,
+	            qtyDefectsTot int
+            )
+
+            insert into @t (
+	            date, 
+	            dateOrder,
+	            productivity,
+	            realized,
+	            qtyDefectsAmb,
+	            qtyDefectsCons,
+	            qtyDefectsTot
+            )
+	        select 
+		        date,
+		        substring(date,7,2)+substring(date,4,2)+substring(date,1,2) as dateOrder,
+		        sum(productivity) as productivity,
+		        sum(realized) as realized,
+		        sum(qtyDefectsAmb) as qtyDefectsAmb,
+		        sum(qtyDefectsCons) as qtyDefectsCons,
+		        sum(qtyDefectsTot) as qtyDefectsTot
+	        from
+		        (
+				select 
+					left(dt_execucao,8) as date,
+					1 as productivity,
+					0 as realized,
+					0 as qtyDefectsAmb,
+					0 as qtyDefectsCons,
+					0 as qtyDefectsTot
+				from alm_execucoes WITH (NOLOCK)
+				where 
+					subprojeto = '@subproject' and
+					entrega = '@delivery' and
+					status in ('PASSED', 'FAILED') and
+					dt_execucao <> ''
+
+				union all
+
+				select 
+					left(dt_execucao,8) as date,
+					0 as productivity,
+					1 as realized,
+					0 as qtyDefectsAmb,
+					0 as qtyDefectsCons,
+					0 as qtyDefectsTot
+				from ALM_CTs WITH (NOLOCK)
+				where 
+					subprojeto = '@subproject' and
+					entrega = '@delivery' and
+					Status_Exec_CT = 'PASSED' and 
+					dt_execucao <> ''
+
+				union all
+
+	            select 
+		            substring(dt_inicial,1,8) as date,
+					0 as productivity,
+					0 as realized,
+					(case when origem = 'AMBIENTE' then 1 else 0 end) as qtyDefectsAmb,
+					(case when origem = 'CONSTRUÇÃO' then 1 else 0 end) as qtyDefectsCons,
+					1 as qtyDefectsTot
+	            from 
+		            alm_defeitos
+	            where
+		            subprojeto = '@subproject' and
+		            entrega = '@delivery' and
+		            status_atual not in ('CLOSED', 'CANCELLED') and
+		            Origem in ('AMBIENTE','CONSTRUÇÃO') and
+		            dt_inicial <> ''
+
+		        ) Aux
+			group by
+				date
+			order by
+				2
+
+            select
+	            convert(varchar, cast(substring('@subproject',4,8) as int)) + ' ' + convert(varchar,cast(substring('@delivery',8,8) as int)) as project,
+	            '@subproject' as subproject,
+	            '@delivery' as delivery,
+	            t.date,
+	            t.productivity,
+	            t.realized,
+	            t.qtyDefectsAmb,
+	            t.qtyDefectsCons,
+	            t.qtyDefectsTot,
+
+	            SUM(t2.qtyDefectsAmb) as qtyDefectsAmbAcum,
+	            SUM(t2.qtyDefectsCons) as qtyDefectsConsAcum,
+	            SUM(t2.qtyDefectsTot) as qtyDefectsTotAcum
+            from 
+	            @t t inner join @t t2 
+	              on t.dateOrder >= t2.dateOrder
+            group by 
+	            t.dateOrder, 
+	            t.date,
+	            t.productivity,
+	            t.realized,
+	            t.qtyDefectsAmb,
+	            t.qtyDefectsCons,
+	            t.qtyDefectsTot
+            order by 
+	            t.dateOrder
+            ";
+            sql = sql.Replace("@subproject", subproject);
+            sql = sql.Replace("@delivery", delivery);
+
+            var Connection = new Connection(Bancos.Sgq);
+            List<productivityXDefects> List = Connection.Executar<productivityXDefects>(sql);
+            Connection.Dispose();
+
+            return List;
+        }
+
+        [HttpGet]
+        [Route("productivityXDefectsGroupWeekly/{subproject}/{delivery}")]
+        public List<productivityXDefectsGroupWeekly> getProductivityXDefectsGroupWeekly(string subproject, string delivery)
+        {
+            string sql = @"
+            declare @t table (
+	            fullWeekNumber varchar(5), 
+	            fullWeekNumberOrder varchar(5),
+	            weekNumber int,
+	            productivity int,
+	            realized int,
+	            qtyDefectsAmb int,
+	            qtyDefectsCons int,
+	            qtyDefectsTot int
+            )
+            insert into @t (
+	            fullWeekNumber, 
+	            fullWeekNumberOrder, 
+	            weekNumber,
+	            productivity,
+	            realized,
+	            qtyDefectsAmb,
+	            qtyDefectsCons,
+	            qtyDefectsTot
+            )
+	        select 
+		        fullWeekNumber,
+		        substring(fullWeekNumber,4,2)+substring(fullWeekNumber,1,2) as fullWeekNumberOrder,
+		        convert(int,substring(fullWeekNumber,1,2)) as weekNumber,
+		        sum(productivity) as productivity,
+		        sum(realized) as realized,
+		        sum(qtyDefectsAmb) as qtyDefectsAmb,
+		        sum(qtyDefectsCons) as qtyDefectsCons,
+		        sum(qtyDefectsTot) as qtyDefectsTot
+	        from
+		        (
+				select 
+					right('00' + convert(varchar,datepart(week, convert(datetime, dt_execucao, 5))),2) + '/' + substring(dt_execucao,7,2) as fullWeekNumber,
+					1 as productivity,
+					0 as realized,
+					0 as qtyDefectsAmb,
+					0 as qtyDefectsCons,
+					0 as qtyDefectsTot
+				from alm_execucoes WITH (NOLOCK)
+				where 
+					subprojeto = '@subproject' and
+					entrega = '@delivery' and
+					status in ('PASSED', 'FAILED') and
+					dt_execucao <> ''
+
+				union all
+
+				select 
+					right('00' + convert(varchar,datepart(week, convert(datetime, dt_execucao, 5))),2) + '/' + substring(dt_execucao,7,2) as fullWeekNumber,
+					0 as productivity,
+					1 as realized,
+					0 as qtyDefectsAmb,
+					0 as qtyDefectsCons,
+					0 as qtyDefectsTot
+				from ALM_CTs WITH (NOLOCK)
+				where 
+					subprojeto = '@subproject' and
+					entrega = '@delivery' and
+					Status_Exec_CT = 'PASSED' and 
+					dt_execucao <> ''
+
+				union all
+
+	            select 
+					right('00' + convert(varchar,datepart(week, convert(datetime, dt_inicial, 5))),2) + '/' + substring(dt_inicial,7,2) as fullWeekNumber,
+					0 as productivity,
+					0 as realized,
+					(case when origem = 'AMBIENTE' then 1 else 0 end) as qtyDefectsAmb,
+					(case when origem = 'CONSTRUÇÃO' then 1 else 0 end) as qtyDefectsCons,
+					1 as qtyDefectsTot
+	            from 
+		            alm_defeitos
+	            where
+		            subprojeto = '@subproject' and
+		            entrega = '@delivery' and
+		            status_atual not in ('CLOSED', 'CANCELLED') and
+		            Origem in ('AMBIENTE','CONSTRUÇÃO') and
+		            dt_inicial <> ''
+
+		        ) Aux
+			group by
+				fullWeekNumber
+			order by
+				2,3
+
+            declare @t1 table (
+	            fullWeekNumber varchar(5), 
+	            fullWeekNumberOrder varchar(5),
+	            productivity int,
+	            realized int,
+	            realizedAverage float,
+	            qtyDefectsAmb int,
+	            qtyDefectsCons int,
+	            qtyDefectsTot int
+            )
+            insert into @t1 (
+	            fullWeekNumber, 
+	            fullWeekNumberOrder, 
+	            productivity,
+	            realized,
+				realizedAverage,
+	            qtyDefectsAmb,
+	            qtyDefectsCons,
+	            qtyDefectsTot
+            )
+			select 
+				a.fullWeekNumber, 
+				a.fullWeekNumberOrder,
+				a.productivity,
+				a.realized,
+
+				round(
+					convert(float,a.realized) / 
+					   case 
+						  when (b.weekNumber - a.weekNumber) > 0 then (b.weekNumber - a.weekNumber) * 7
+						  when (b.weekNumber - a.weekNumber) < 0 then ((b.weekNumber - a.weekNumber) * -1 - 51) * 7
+					   end,
+				2) as realizedAverage,
+
+				a.qtyDefectsAmb,
+				a.qtyDefectsCons,
+				a.qtyDefectsTot
+			from
+				(select ROW_NUMBER() OVER(ORDER BY t1.fullWeekNumberOrder) as id, * from @t t1) a
+				left join (select ROW_NUMBER() OVER(ORDER BY t1.fullWeekNumberOrder) as id, * from @t t1) b
+				  on b.id = a.id + 1
+			order by 
+				a.fullWeekNumberOrder
+
+            select
+	            convert(varchar, cast(substring('@subproject',4,8) as int)) + ' ' + convert(varchar,cast(substring('@delivery',8,8) as int)) as project,
+	            '@subproject' as subproject,
+	            '@delivery' as delivery,
+	            t11.fullWeekNumber,
+	            t11.productivity,
+	            t11.realized,
+				t11.realizedAverage,
+	            t11.qtyDefectsAmb,
+	            t11.qtyDefectsCons,
+	            t11.qtyDefectsTot,
+
+	            SUM(t12.qtyDefectsAmb) as qtyDefectsAmbAcum,
+	            SUM(t12.qtyDefectsCons) as qtyDefectsConsAcum,
+	            SUM(t12.qtyDefectsTot) as qtyDefectsTotAcum
+            from 
+	            @t1 t11 inner join @t1 t12 
+	              on t11.fullWeekNumberOrder >= t12.fullWeekNumberOrder
+            group by 
+	            t11.fullWeekNumber,
+	            t11.fullWeekNumberOrder, 
+	            t11.productivity,
+	            t11.realized,
+	            t11.realizedAverage,
+	            t11.qtyDefectsAmb,
+	            t11.qtyDefectsCons,
+	            t11.qtyDefectsTot
+            order by 
+	            t11.fullWeekNumberOrder
+            ";
+            sql = sql.Replace("@subproject", subproject);
+            sql = sql.Replace("@delivery", delivery);
+
+            var Connection = new Connection(Bancos.Sgq);
+            List<productivityXDefectsGroupWeekly> List = Connection.Executar<productivityXDefectsGroupWeekly>(sql);
+            Connection.Dispose();
+
+            return List;
+        }
+
 
         /*
         [HttpGet]
@@ -1832,12 +2209,11 @@ namespace projectJson.Controllers
             ";
 
             var Connection = new Connection(Bancos.Sgq);
-
             List<noPredictionDefects> List = Connection.Executar<noPredictionDefects>(sql);
+            Connection.Dispose();
 
             return List;
         }
-
 
 
         /* PEDRO */
@@ -1860,8 +2236,8 @@ namespace projectJson.Controllers
             ";
 
             var Connection = new Connection(Bancos.Sgq);
-
             List<bptReleases> ListRelease = Connection.Executar<bptReleases>(sql);
+            Connection.Dispose();
 
             return ListRelease;
         }
@@ -1887,8 +2263,8 @@ namespace projectJson.Controllers
             ";
 
             var Connection = new Connection(Bancos.Sgq);
-
             List<bptProjects> ListProjects = Connection.Executar<bptProjects>(sql);
+            Connection.Dispose();
 
             return ListProjects;
         }
@@ -1941,8 +2317,8 @@ namespace projectJson.Controllers
             ";
 
             var Connection = new Connection(Bancos.Sgq);
-
             List<bptBpts> ListBpts = Connection.Executar<bptBpts>(sql);
+            Connection.Dispose();
 
             return ListBpts;
         }
@@ -2018,8 +2394,8 @@ namespace projectJson.Controllers
                 ";
 
             var Connection = new Connection(Bancos.Sgq);
-
             List<bptValidPlanoEvid> ListValidPlanoEvid = Connection.Executar<bptValidPlanoEvid>(sql);
+            Connection.Dispose();
 
             return ListValidPlanoEvid;
         }
@@ -2045,8 +2421,8 @@ namespace projectJson.Controllers
                 ";
 
             var Connection = new Connection(Bancos.Sgq);
-
             List<bptCadastroStatus> ListCadastroStatus = Connection.Executar<bptCadastroStatus>(sql);
+            Connection.Dispose();
 
             return ListCadastroStatus;
         }

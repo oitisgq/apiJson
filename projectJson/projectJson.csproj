@@ -122,6 +122,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
+    <Folder Include="Views\eMail\" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App_Start\BundleConfig.cs" />
@@ -162,6 +163,7 @@
     <Compile Include="Classes\DataEHora.cs" />
     <Compile Include="Classes\Gerais.cs" />
     <Compile Include="Classes\LibsAplicativo.cs" />
+    <Compile Include="Controllers\eMailController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\SGQController.cs" />
     <Compile Include="Controllers\ValuesController.cs" />
@@ -173,7 +175,10 @@
     <Compile Include="Models\bptProjects.cs" />
     <Compile Include="Models\bptReleases.cs" />
     <Compile Include="Models\bptValidPlanoEvid.cs" />
-    <Compile Include="Models\ctsImpactedByDefects.cs" />
+    <Compile Include="Models\eMail\Email.cs" />
+    <Compile Include="Models\productivityXDefectsGroupWeekly.cs" />
+    <Compile Include="Models\productivityXDefects.cs" />
+    <Compile Include="Models\ctsImpactedXDefects.cs" />
     <Compile Include="Models\defectDetail.cs" />
     <Compile Include="Models\defectsOpen.cs" />
     <Compile Include="Models\defectsStatus.cs" />

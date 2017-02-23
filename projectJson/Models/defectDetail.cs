@@ -29,7 +29,7 @@ namespace projectJson.Models
         public int qtyReopened { get; set; }
         public int qtyImpactedCTs { get; set; }
         public int qtyPingPong { get; set; }
-        public double qtyBusinessHours { get; set; }
+        public double aging { get; set; }
         public string Comments { get; set; }
     }
 }
