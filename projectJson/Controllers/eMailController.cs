@@ -35,7 +35,7 @@ namespace ProjectJson.Controllers
 
         string[] url = new string[] { email.url };
 
-        string[] options = new string[] { "-p http://oi12949:DaniJOF5@10.32.150.40:82 ", " --crop-y 53 ", " --javascript-delay 5000 " };
+        string[] options = new string[] { "-p http://oi12949:DaniJOF5@10.32.150.40:82 ", " --crop-y 53 ", " --javascript-delay 10000 " };
 
         string imageFile = Classes.HtmlToImage.convert(outfolder, outfile, url, options);
 
@@ -57,6 +57,8 @@ namespace ProjectJson.Controllers
 
             //foreach (string i in email.cc)
             //    if (i.ToString() != "") message.CC.Add(i);
+
+            message.CC.Add("joao.frade@oi.net.br");
 
             message.Subject = email.subject;
             //message.Subject = "Teste Report";

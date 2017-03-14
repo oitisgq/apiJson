@@ -124,6 +124,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
+    <Folder Include="Views\Auth\" />
     <Folder Include="Views\eMail\" />
     <Folder Include="Views\Project\" />
   </ItemGroup>
@@ -167,11 +168,13 @@
     <Compile Include="Classes\Gerais.cs" />
     <Compile Include="Classes\HtmlToImage.cs" />
     <Compile Include="Classes\LibsAplicativo.cs" />
+    <Compile Include="Controllers\AuthController.cs" />
     <Compile Include="Controllers\eMailController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\ProjectController.cs" />
     <Compile Include="Controllers\SGQController.cs" />
     <Compile Include="Controllers\ValuesController.cs" />
+    <Compile Include="DAOs\UserDAO.cs" />
     <Compile Include="DAOs\ProjectDAO.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
@@ -210,6 +213,7 @@
     <Compile Include="Models\agingDefects.cs" />
     <Compile Include="Models\detectableInDev.cs" />
     <Compile Include="Models\noPredictionDefects.cs" />
+    <Compile Include="Models\user\User.cs" />
     <Compile Include="Models\wrongClassif.cs" />
     <Compile Include="Models\densityDefects.cs" />
     <Compile Include="Models\projects.cs" />
