@@ -1,10 +1,10 @@
 using System;
 using System.Web.Http;
 using System.Web.Mvc;
-using projectJson.Areas.HelpPage.ModelDescriptions;
-using projectJson.Areas.HelpPage.Models;
+using ProjectJson.Areas.HelpPage.ModelDescriptions;
+using ProjectJson.Areas.HelpPage.Models;
 
-namespace projectJson.Areas.HelpPage.Controllers
+namespace ProjectJson.Areas.HelpPage.Controllers
 {
     /// <summary>
     /// The controller that will handle requests for the help page.

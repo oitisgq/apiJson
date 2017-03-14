@@ -2,9 +2,9 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Net.Http.Headers;
 using System.Web.Http.Description;
-using projectJson.Areas.HelpPage.ModelDescriptions;
+using ProjectJson.Areas.HelpPage.ModelDescriptions;
 
-namespace projectJson.Areas.HelpPage.Models
+namespace ProjectJson.Areas.HelpPage.Models
 {
     /// <summary>
     /// The model that represents an API displayed on the help page.

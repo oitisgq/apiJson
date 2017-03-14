@@ -1,7 +1,7 @@
 using System.Web.Http;
 using System.Web.Mvc;
 
-namespace projectJson.Areas.HelpPage
+namespace ProjectJson.Areas.HelpPage
 {
     public class HelpPageAreaRegistration : AreaRegistration
     {

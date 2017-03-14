@@ -1,17 +1,14 @@
-﻿using System;
+﻿using Classes;
+using ProjectJson.Models;
+using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Data.SqlClient;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Http;
 using System.Web.Http;
-using projectJson.Models;
-using Classes;
-using System.Data;
-using System.Data.SqlClient;
-using System.Web;
-using System.Diagnostics;
 
-namespace projectJson.Controllers
+namespace ProjectJson.Controllers
 {
 
     public class SGQController : ApiController
@@ -514,7 +511,7 @@ namespace projectJson.Controllers
         */
 
         [HttpGet] // DEVERAR SAIR, QUANDO IMPLANTADO EM PRODUÇÃO
-        [Route("DefectsMiddleAges")]
+        [Route("defectsMiddleAges")]
         public List<agingMedioDefects> getAgingMedio()
         {
             string sql = @"
@@ -572,7 +569,7 @@ namespace projectJson.Controllers
 
 
         [HttpGet]
-        [Route("DefectsAverangeTime/{subproject}/{delivery}")]
+        [Route("defectsAverangeTime/{subproject}/{delivery}")]
         public List<defectAverangeTime> getDefectsAverangeTime(string subproject, string delivery)
         {
             string sql = @"
@@ -706,7 +703,6 @@ namespace projectJson.Controllers
 
             return List;
         }
-
 
 
         [HttpGet]
@@ -2053,10 +2049,17 @@ namespace projectJson.Controllers
 
 				round(
 					convert(float,a.realized) / 
-					   case 
-						  when (b.weekNumber - a.weekNumber) > 0 then (b.weekNumber - a.weekNumber) * 7
-						  when (b.weekNumber - a.weekNumber) < 0 then ((b.weekNumber - a.weekNumber) * -1 - 51) * 7
-					   end,
+                        case when (case 
+						      when (b.weekNumber - a.weekNumber) > 0 then (b.weekNumber - a.weekNumber) * 7
+						      when (b.weekNumber - a.weekNumber) < 0 then ((b.weekNumber - a.weekNumber) * -1 - 51) * 7
+					         end) > 1 
+                          then 
+                             (case 
+						        when (b.weekNumber - a.weekNumber) > 0 then (b.weekNumber - a.weekNumber) * 7
+						        when (b.weekNumber - a.weekNumber) < 0 then ((b.weekNumber - a.weekNumber) * -1 - 51) * 7
+					         end)
+                          else 1
+                        end,
 				2) as realizedAverage,
 
 				a.qtyDefectsAmb,

@@ -57,6 +57,8 @@
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Windows.Forms.DataVisualization" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Web" />
     <Reference Include="System.Web.Abstractions" />
@@ -123,6 +125,7 @@
   <ItemGroup>
     <Folder Include="App_Data\" />
     <Folder Include="Views\eMail\" />
+    <Folder Include="Views\Project\" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App_Start\BundleConfig.cs" />
@@ -162,11 +165,14 @@
     <Compile Include="Classes\Comando.cs" />
     <Compile Include="Classes\DataEHora.cs" />
     <Compile Include="Classes\Gerais.cs" />
+    <Compile Include="Classes\HtmlToImage.cs" />
     <Compile Include="Classes\LibsAplicativo.cs" />
     <Compile Include="Controllers\eMailController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
+    <Compile Include="Controllers\ProjectController.cs" />
     <Compile Include="Controllers\SGQController.cs" />
     <Compile Include="Controllers\ValuesController.cs" />
+    <Compile Include="DAOs\ProjectDAO.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
@@ -182,6 +188,16 @@
     <Compile Include="Models\defectDetail.cs" />
     <Compile Include="Models\defectsOpen.cs" />
     <Compile Include="Models\defectsStatus.cs" />
+    <Compile Include="Models\project\DefectAverangeTime.cs" />
+    <Compile Include="Models\project\DefectAverangeTimeGroupSeverity.cs" />
+    <Compile Include="Models\project\DefectDensity.cs" />
+    <Compile Include="Models\project\DefectReopened.cs" />
+    <Compile Include="Models\project\DefectStatus.cs" />
+    <Compile Include="Models\project\DetectableInDev.cs" />
+    <Compile Include="Models\project\StatusLastDays.cs" />
+    <Compile Include="Models\project\ProjectFull.cs" />
+    <Compile Include="Models\project\Project.cs" />
+    <Compile Include="Models\project\Status.cs" />
     <Compile Include="Models\status.cs" />
     <Compile Include="Models\defectAverangeTime.cs" />
     <Compile Include="Models\agingMedioDefects.cs" />

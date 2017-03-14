@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 
-namespace projectJson.Models.eMail
+namespace ProjectJson.Models.eMail
 {
     public class Email
     {
@@ -16,7 +16,7 @@ namespace projectJson.Models.eMail
 
         public string subject { get; set; }
 
-        public string body { get; set; }
+        public string url { get; set; }
 
         // public HttpPostedFileBase attachment { get; set; }
     }

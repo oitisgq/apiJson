@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 
-namespace projectJson.Models
+namespace ProjectJson.Models
 {
     public class agingDefects
     {

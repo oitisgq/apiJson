@@ -1,4 +1,4 @@
-namespace projectJson.Areas.HelpPage
+namespace ProjectJson.Areas.HelpPage
 {
     /// <summary>
     /// Indicates whether the sample is used for request or response

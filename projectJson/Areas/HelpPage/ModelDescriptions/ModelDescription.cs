@@ -1,6 +1,6 @@
 using System;
 
-namespace projectJson.Areas.HelpPage.ModelDescriptions
+namespace ProjectJson.Areas.HelpPage.ModelDescriptions
 {
     /// <summary>
     /// Describes a type model.
