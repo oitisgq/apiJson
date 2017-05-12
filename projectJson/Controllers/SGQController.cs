@@ -7,10 +7,11 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.Http;
 using System.Web.Http;
+using System.Web.Http.Cors;
 
 namespace ProjectJson.Controllers
 {
-
+    // [EnableCors(origins: "*", headers: "*", methods: "*", SupportsCredentials = false)]
     public class SGQController : ApiController
     {
         [HttpGet]
@@ -62,6 +63,8 @@ namespace ProjectJson.Controllers
             return ListDevManufacturers;
         }
 
+        
+
         [HttpGet]
         [Route("systems")]
         public List<systems> getSystems()
@@ -106,6 +109,8 @@ namespace ProjectJson.Controllers
 
             return ListSystems;
         }
+
+        
 
         [HttpGet] // DEVERA SAIR, QUANDO IMPLATADO EM PRODUCAO
         [Route("projects")]
@@ -176,12 +181,52 @@ namespace ProjectJson.Controllers
 	                re.release_ano,
 	                re.release_mes
                 ";
+
+            //string sql = @"
+            //           select 
+            //               sgq_projetos.id,
+            //               sgq_projetos.subprojeto as subproject,
+            //               sgq_projetos.entrega as delivery,
+            //               convert(varchar, cast(substring(sgq_projetos.subprojeto,4,8) as int)) + ' ' + convert(varchar,cast(substring(sgq_projetos.entrega,8,8) as int)) as subprojectDelivery,
+            //               biti_subprojetos.nome as name,
+            //               biti_subprojetos.objetivo as objective,
+            //biti_subprojetos.classificacao_nome as classification,
+            //replace(replace(replace(replace(replace(biti_subprojetos.estado,'CONSOLIDAÇÃO E APROVAÇÃO DO PLANEJAMENTO','CONS/APROV. PLAN'),'PLANEJAMENTO','PLANEJ.'),'DESENHO DA SOLUÇÃO','DES.SOL'),'VALIDAÇÃO','VALID.'),'AGUARDANDO','AGUAR.') as state,
+            //(select Sigla from sgq_meses m where m.id = SGQ_Releases_Entregas.release_mes) + ' ' + convert(varchar, SGQ_Releases_Entregas.release_ano) as release,
+            //biti_subprojetos.Gerente_Projeto as GP,
+            //      biti_subprojetos.Gestor_Do_Gestor_LT as N3,
+            //               sgq_projetos.Farol as trafficLight,
+            //               sgq_projetos.Causa_Raiz as rootCause,
+            //               sgq_projetos.Plano_Acao as actionPlan,
+            //               sgq_projetos.Informativo as informative,
+            //               sgq_projetos.Pontos_Atencao as attentionPoints,
+            //               sgq_projetos.Pontos_Atencao_Indicadores as attentionPointsOfIndicators,
+            //               sgq_projetos.Iterations
+            //           from 
+            //               sgq_projetos
+            //               inner join alm_projetos WITH (NOLOCK)
+            //              on alm_projetos.subprojeto = sgq_projetos.subprojeto and
+            //                alm_projetos.entrega = sgq_projetos.entrega and
+            //                alm_projetos.ativo = 'Y'
+            //               left join biti_subprojetos WITH (NOLOCK)
+            //              on biti_subprojetos.id = sgq_projetos.subprojeto
+            //left join SGQ_Releases_Entregas WITH (NOLOCK)
+            //              on SGQ_Releases_Entregas.subprojeto = sgq_projetos.subprojeto and
+            //     SGQ_Releases_Entregas.entrega = sgq_projetos.entrega and
+            //	 SGQ_Releases_Entregas.id = (select top 1 re2.id from SGQ_Releases_Entregas re2 
+            //	                             where re2.subprojeto = SGQ_Releases_Entregas.subprojeto and 
+            //								       re2.entrega = SGQ_Releases_Entregas.entrega 
+            //								 order by re2.release_ano desc, re2.release_mes desc)            
+            //           where (select Sigla from sgq_meses m where m.id = SGQ_Releases_Entregas.release_mes) + ' ' + convert(varchar, SGQ_Releases_Entregas.release_ano) is not null
+            //       ";
             var Connection = new Connection(Bancos.Sgq);
             List<projects> ListProjects = Connection.Executar<projects>(sql);
             Connection.Dispose();
 
             return ListProjects;
         }
+
+        
 
 
         [HttpGet]
@@ -242,6 +287,24 @@ namespace ProjectJson.Controllers
             {
                 var connection = new Connection(Bancos.Sgq);
 
+                if (item.trafficLight == null)
+                    item.trafficLight = "";
+
+                if (item.rootCause == null)
+                    item.rootCause = "";
+
+                if (item.actionPlan == null)
+                    item.actionPlan = "";
+
+                if (item.informative == null)
+                    item.informative = "";
+
+                if (item.attentionPoints == null)
+                    item.attentionPoints = "";
+
+                if (item.attentionPointsOfIndicators == null)
+                    item.attentionPointsOfIndicators = "";
+
                 bool resultado = false;
                 if (item == null) throw new ArgumentNullException("item");
                 if (id == 0) throw new ArgumentNullException("id");
@@ -281,7 +344,7 @@ namespace ProjectJson.Controllers
 
         }
 
-
+        /*
         [HttpGet]
         [Route("iterations/{subproject}/{delivery}")]
         public List<iteration> getIterationByProject(string subproject, string delivery)
@@ -309,7 +372,7 @@ namespace ProjectJson.Controllers
 
             return List;
         }
-
+        */
 
         [HttpGet]
         [Route("defectsDensity")]
@@ -388,6 +451,82 @@ namespace ProjectJson.Controllers
             return List;
         }
 
+
+        [HttpGet]
+        [Route("defectsDensity/{dateBegin}/{dateEnd}")]
+        public List<densityDefects> getDensityByDate(string dateBegin, string dateEnd)
+        {
+            string sql = @"
+                select 
+	                dayExecution + '/' + monthExecution + '/' + yearExecution as date,
+	                devManufacturing,
+	                system,
+	                convert(varchar, cast(substring(subproject,4,8) as int)) + ' ' + convert(varchar,cast(substring(delivery,8,8) as int)) as project,
+	                subproject,
+	                delivery,
+	                sum(qte_defeitos) as qtyDefects,
+	                count(*) as qtyCTs,
+	                round(convert(float,sum(qte_defeitos)) / (case when count(*) = 0 then 1 else count(*) end) * 100,2) as density
+                from
+	                (select 
+		                cts.fabrica_desenvolvimento as devManufacturing,
+		                cts.subprojeto as subproject,
+		                cts.entrega as delivery,
+		                cts.sistema as system,
+						substring(cts.dt_execucao,1,2) as dayExecution,
+		                substring(cts.dt_execucao,4,2) as monthExecution,
+		                substring(cts.dt_execucao,7,2) as yearExecution,
+		                (
+		                select count(*) 
+		                from alm_defeitos df 
+		                where df.subprojeto = cts.subprojeto and
+			                    df.entrega = cts.entrega and
+			                    df.ct = cts.ct and
+			                    df.status_atual = 'CLOSED' and
+			                    df.Origem like '%CONSTRUÇÃO%' and
+		                        (df.Ciclo like '%TI%' or df.Ciclo like '%UAT%')
+		                ) as qte_defeitos
+	                from 
+		                alm_cts cts
+	                where
+		                status_exec_ct = 'PASSED' and
+		                cts.fabrica_desenvolvimento is not null and
+		                cts.massa_Teste <> 'SIM' and
+		                (cts.ciclo like '%TI%' or cts.ciclo like '%UAT%') and
+						cts.dt_execucao <> ''
+	                ) Aux
+					where 
+					yearExecution  + monthExecution + dayExecution >= '@dateBegin' and
+					yearExecution  + monthExecution + dayExecution <= '@dateEnd'
+                group by
+	                devManufacturing,
+	                subproject,
+	                delivery,
+	                devManufacturing, 
+	                system,
+					dayExecution,
+	                monthExecution,
+	                yearExecution
+                order by
+	                yearExecution,
+	                monthExecution,
+					dayExecution,
+	                devManufacturing, 
+	                system,
+	                subproject,
+	                delivery
+                ";
+            sql = sql.Replace("@dateBegin", dateBegin);
+            sql = sql.Replace("@dateEnd", dateEnd);
+
+            var Connection = new Connection(Bancos.Sgq);
+            List<densityDefects> List = Connection.Executar<densityDefects>(sql);
+            Connection.Dispose();
+
+            return List;
+        }
+
+        /*
         [HttpGet]
         [Route("defectsDensity/{subproject}/{delivery}")]
         public List<densityDefects> getDensityByProject(string subproject, string delivery)
@@ -459,6 +598,7 @@ namespace ProjectJson.Controllers
 
             return List;
         }
+        */
 
         /*
         [HttpGet]
@@ -567,7 +707,59 @@ namespace ProjectJson.Controllers
             return List;
         }
 
+        [HttpGet] // DEVERAR SAIR, QUANDO IMPLANTADO EM PRODUÇÃO
+        [Route("defectsMiddleAges/{dateBegin}/{dateEnd}")]
+        public List<agingMedioDefects> getAgingMedioByDate(string dateBegin, string dateEnd)
+        {
+            string sql = @"
+                select 
+	                substring(severidade,3,10) as severity,
+	                substring(dt_final,1,2) + '/' + substring(dt_final,4,2) + '/' + substring(dt_final,7,2) as date,
+	                fabrica_desenvolvimento as devManufacturing,
+	                sistema_defeito as system,
+	                convert(varchar, cast(substring(Subprojeto,4,8) as int)) + ' ' + convert(varchar,cast(substring(Entrega,8,8) as int)) as project,
+	                subprojeto as subproject,
+	                entrega as delivery,
+	                count(*) as qtyDefects,
+	                round(sum(Aging),2) as qtyHours,
+	                round(sum(Aging) / count(*),2) as Media
+                from 
+	                alm_defeitos s
+                where 
+	                (ciclo like '%TI%' or ciclo like '%UAT%') and
+	                status_atual = 'CLOSED' and
+	                dt_final <> '' and
+					substring(dt_final,7,2) + substring(dt_final,4,2) + substring(dt_final,1,2) >= '@dateBegin' and
+					substring(dt_final,7,2) + substring(dt_final,4,2) + substring(dt_final,1,2) <= '@dateEnd'
+                group by
+	                substring(severidade,3,10),
+	                severidade,
+	                substring(dt_final,4,2),
+	                substring(dt_final,7,2),
+					substring(dt_final,1,2),
+	                subprojeto,
+	                entrega,
+	                fabrica_desenvolvimento,
+	                sistema_defeito
+                order by 
+	                severidade,
+					substring(dt_final,1,2),
+	                substring(dt_final,4,2),
+					substring(dt_final,7,2),
+	                fabrica_desenvolvimento
+            ";
 
+            sql = sql.Replace("@dateBegin", dateBegin);
+            sql = sql.Replace("@dateEnd", dateEnd);
+
+            var Connection = new Connection(Bancos.Sgq);
+            List<agingMedioDefects> List = Connection.Executar<agingMedioDefects>(sql);
+            Connection.Dispose();
+
+            return List;
+        }
+
+        /*
         [HttpGet]
         [Route("defectsAverangeTime/{subproject}/{delivery}")]
         public List<defectAverangeTime> getDefectsAverangeTime(string subproject, string delivery)
@@ -616,7 +808,7 @@ namespace ProjectJson.Controllers
 
             return List;
         }
-
+        */
 
         [HttpGet]
         [Route("defectsWrongClassif")]
@@ -704,6 +896,72 @@ namespace ProjectJson.Controllers
             return List;
         }
 
+        [HttpGet]
+        [Route("defectsWrongClassif/{dateBegin}/{dateEnd}")]
+        public List<wrongClassif> getWrongClassificationDefectRateByDate(string dateBegin, string dateEnd)
+        {
+            string sql = @"
+                select 
+	                 substring(dt_final,1,2) + '/' + substring(dt_final,4,2) + '/' + substring(dt_final,7,2) as date,
+
+	                case when Aud_FD_Ofensora is not null 
+			                then Aud_FD_Ofensora 
+			                else fabrica_desenvolvimento 
+	                end as devManufacturing,
+
+	                sistema_defeito as system,
+	                convert(varchar, cast(substring(subprojeto,4,8) as int)) + ' ' + convert(varchar,cast(substring(entrega,8,8) as int)) as project,
+	                subprojeto as subproject,
+	                entrega as delivery,
+	                count(*) as qtyTotal,
+	                sum(
+		                case when 
+				                Aud_Regra_Infringida is not null and
+				                Aud_FD_Ofensora is not null
+			                then 1
+			                else 0
+		                end	
+	                ) as qty,
+	                5 as percentReference,
+	                round(convert(float,count(*) * 0.05),2) as qtyReference
+                from 
+	                alm_defeitos 
+                where 
+	                (ciclo like '%TI%' or ciclo like '%UAT%') and
+	                status_atual = 'CLOSED' and 
+	                dt_final <> '' and
+					substring(dt_final,7,2) + substring(dt_final,4,2) + substring(dt_final,1,2) >= '@dateBegin' and
+					substring(dt_final,7,2) + substring(dt_final,4,2) + substring(dt_final,1,2) <= '@dateEnd'
+                group by
+	                substring(dt_final,4,2),
+	                substring(dt_final,7,2),
+					substring(dt_final,1,2),
+	                subprojeto,
+	                entrega,
+	                case when Aud_FD_Ofensora is not null 
+			                then Aud_FD_Ofensora 
+			                else fabrica_desenvolvimento 
+	                end,
+	                sistema_defeito
+                order by 
+	                substring(dt_final,7,2),
+	                substring(dt_final,4,2),
+					substring(dt_final,1,2),
+	                case when Aud_FD_Ofensora is not null 
+			                then Aud_FD_Ofensora 
+			                else fabrica_desenvolvimento 
+	                end
+            ";
+
+            sql = sql.Replace("@dateBegin", dateBegin);
+            sql = sql.Replace("@dateEnd", dateEnd);
+
+            var Connection = new Connection(Bancos.Sgq);
+            List<wrongClassif> List = Connection.Executar<wrongClassif>(sql);
+            Connection.Dispose();
+
+            return List;
+        }
 
         [HttpGet]
         [Route("defectsDetectableInDev")]
@@ -773,6 +1031,61 @@ namespace ProjectJson.Controllers
         }
 
         [HttpGet]
+        [Route("defectsDetectableInDev/{dateBegin}/{dateEnd}")]
+        public List<detectableInDev> getDetectableInDevByDate(string dateBegin, string dateEnd)
+        {
+            string sql = @"
+                select 
+	                substring(dt_final,1,2) + '/' + substring(dt_final,4,2) + '/' + substring(dt_final,7,2) as date,
+	                fabrica_desenvolvimento as devManufacturing,
+	                sistema_defeito as system,
+	                convert(varchar, cast(substring(Subprojeto,4,8) as int)) + ' ' + convert(varchar,cast(substring(Entrega,8,8) as int)) as project,
+	                subprojeto as subproject,
+	                entrega as delivery,
+	                count(*) as qtyTotal,
+	                sum(
+		                case when Erro_Detectavel_Em_Desenvolvimento = 'SIM'
+			                then 1
+			                else 0
+		                end	
+	                ) as qty,
+	                5 as percentReference,
+	                round(convert(float,count(*) * 0.05),2) as qtyReference
+                from 
+	                alm_defeitos 
+                where 
+	                (ciclo like '%TI%' or ciclo like '%UAT%') and
+	                status_atual = 'CLOSED' and 
+	                dt_final <> '' and
+					substring(dt_final,7,2) + substring(dt_final,4,2) + substring(dt_final,1,2) >= '@dateBegin' and
+					substring(dt_final,7,2) + substring(dt_final,4,2) + substring(dt_final,1,2) <= '@dateEnd'
+                group by
+				    substring(dt_final,1,2),
+	                substring(dt_final,4,2),
+	                substring(dt_final,7,2),
+	                subprojeto,
+	                entrega,
+	                fabrica_desenvolvimento,
+	                sistema_defeito
+                order by 
+	                substring(dt_final,7,2),
+	                substring(dt_final,4,2),
+					substring(dt_final,1,2),
+	                fabrica_desenvolvimento
+            ";
+
+            sql = sql.Replace("@dateBegin", dateBegin);
+            sql = sql.Replace("@dateEnd", dateEnd);
+
+            var Connection = new Connection(Bancos.Sgq);
+            List<detectableInDev> List = Connection.Executar<detectableInDev>(sql);
+            Connection.Dispose();
+
+            return List;
+        }
+
+        /*
+        [HttpGet]
         [Route("defectsDetectableInDev/{subproject}/{delivery}")]
         public List<defectDetectableInDev> getDetectableInDev(string subproject, string delivery)
         {
@@ -822,6 +1135,7 @@ namespace ProjectJson.Controllers
 
             return List;
         }
+        */
 
         [HttpGet]
         [Route("defectDetail/{subproject}/{delivery}/{defect}")]
@@ -837,6 +1151,7 @@ namespace ProjectJson.Controllers
 	            d.Nome as name,
 	            Ciclo as cycle,
 	            CT,
+				(select nome from alm_cts cts where cts.subprojeto = d.subprojeto and cts.entrega = d.entrega and cts.ct = d.CT) as ctName,
 	            Sistema_CT as ctSystem,
                 Sistema_Defeito as defectSystem,
 	            Fabrica_Desenvolvimento as devManuf,
@@ -875,6 +1190,7 @@ namespace ProjectJson.Controllers
 	            --) as qtyBusinessHours,
 
                 d.aging,
+   	            substring('-  ',2+convert(int,sign(d.aging)),1) + right(convert(varchar, floor(abs(d.aging))), 3) + ':' + right('00' + convert(varchar,round( 60*(abs(d.aging)-floor(abs(d.aging))), 0)), 2) as agingDisplay,
 
                 (select top 1 novo_valor
                 from ALM_Historico_Alteracoes_Campos h WITH(NOLOCK)
@@ -970,7 +1286,57 @@ namespace ProjectJson.Controllers
             return List;
         }
 
+        [HttpGet]
+        [Route("defectsReopened/{dateBegin}/{dateEnd}")]
+        public List<reopenedDefects> getReopenedByDate(string dateBegin, string dateEnd)
+        {
+            string sql = @"
+                select
+	                substring(dt_final,1,2) + '/' + substring(dt_final,4,2) + '/' + substring(dt_final,7,2) as date,
+	                fabrica_desenvolvimento as devManufacturing,
+	                sistema_defeito as system,
+	                convert(varchar, cast(substring(Subprojeto,4,8) as int)) + ' ' + convert(varchar,cast(substring(Entrega,8,8) as int)) as project,
+	                entrega as delivery,
+	                subprojeto as subproject,
+	                count(*) as qtyTotal,
+	                sum(qtd_reopen) as qty,
+	                round(convert(float,sum(qtd_reopen)) / count(*) * 100,2) as [percent],
+	                5 as percentReference,
+	                round(convert(float,count(*) * 0.05),2) as qtyReference
+                from 
+	                alm_defeitos 
+                where 
+	                (ciclo like '%TI%' or ciclo like '%UAT%') and
+	                status_atual = 'CLOSED' and
+	                dt_final <> '' and
+					substring(dt_final,7,2) + substring(dt_final,4,2) + substring(dt_final,1,2) >= '@dateBegin' and
+					substring(dt_final,7,2) + substring(dt_final,4,2) + substring(dt_final,1,2) <= '@dateEnd'
+                group by
+				    substring(dt_final,1,2),
+	                substring(dt_final,4,2),
+	                substring(dt_final,7,2),
+	                subprojeto,
+	                entrega,
+	                fabrica_desenvolvimento,
+	                sistema_defeito
+                order by 
+	                substring(dt_final,7,2),
+	                substring(dt_final,4,2),
+					substring(dt_final,1,2),
+	                fabrica_desenvolvimento
+            ";
 
+            sql = sql.Replace("@dateBegin", dateBegin);
+            sql = sql.Replace("@dateEnd", dateEnd);
+
+            var Connection = new Connection(Bancos.Sgq);
+            List<reopenedDefects> List = Connection.Executar<reopenedDefects>(sql);
+            Connection.Dispose();
+
+            return List;
+        }
+
+        /*
         [HttpGet]
         [Route("defectsReopened/{subproject}/{delivery}")]
         public List<defectReopened> GetReopened(string subproject, string delivery)
@@ -1029,8 +1395,9 @@ namespace ProjectJson.Controllers
 
             return List;
         }
+        */
 
-
+        /*
         [HttpGet]
         [Route("defectsOpenInTestManuf/{subproject}/{delivery}")]
         public List<defectsOpen> getDefectsOpenInTestManuf(string subproject, string delivery)
@@ -1073,7 +1440,9 @@ namespace ProjectJson.Controllers
 
             return List;
         }
+        */
 
+        /*
         [HttpGet]
         [Route("defectsOpenInDevManuf/{subproject}/{delivery}")]
         public List<defectsOpen> getDefectsOpenInDevManuf(string subproject, string delivery)
@@ -1118,8 +1487,9 @@ namespace ProjectJson.Controllers
 
             return List;
         }
+        */
 
-
+        /*
         [HttpGet]
         [Route("defectsStatus/{subproject}/{delivery}")]
         public List<defectsStatus> getDefectsStatus(string subproject, string delivery)
@@ -1184,8 +1554,9 @@ namespace ProjectJson.Controllers
 
             return List;
         }
+        */
 
-
+        /*
         [HttpGet]
         [Route("defectsGroupOrigin/{subproject}/{delivery}")]
         public List<defectsStatus> getDefectsGroupOrigin(string subproject, string delivery)
@@ -1231,8 +1602,9 @@ namespace ProjectJson.Controllers
 
             return List;
         }
+        */
 
-
+        /*
         [HttpGet]
         [Route("statusGroupDay/{subproject}/{delivery}")]
         public List<status> getStatusGroupDay(string subproject, string delivery)
@@ -1355,8 +1727,11 @@ namespace ProjectJson.Controllers
 						h.subprojeto = cts.subprojeto and
 						h.entrega = cts.entrega and
 						h.tabela = 'TESTCYCL' and 
+						h.tabela_id =  cts.ct and 
 						h.campo = '(EVIDÊNCIA) VALIDAÇÃO TÉCNICA' and
 						h.novo_valor = cts.Evidencia_Validacao_Tecnica
+					order by 
+						substring(dt_alteracao,7,2)+substring(dt_alteracao,4,2)+substring(dt_alteracao,1,2) desc
 					),8) as date,
 					0 as active,
 					0 as activeUAT,
@@ -1384,8 +1759,11 @@ namespace ProjectJson.Controllers
 						h.subprojeto = cts.subprojeto and
 						h.entrega = cts.entrega and
 						h.tabela = 'TESTCYCL' and 
+						h.tabela_id =  cts.ct and 
 						h.campo = '(EVIDÊNCIA) VALIDAÇÃO CLIENTE' and
 						h.novo_valor = cts.Evidencia_Validacao_Cliente
+					order by 
+						substring(dt_alteracao,7,2)+substring(dt_alteracao,4,2)+substring(dt_alteracao,1,2) desc
 					),8) as date,
 					0 as active,
 					0 as activeUAT,
@@ -1467,7 +1845,9 @@ namespace ProjectJson.Controllers
 
             return List;
         }
+        */
 
+        /*
         [HttpGet]
         [Route("statusGroupMonth/{subproject}/{delivery}")]
         public List<status> getStatusGroupMonth(string subproject, string delivery)
@@ -1590,8 +1970,11 @@ namespace ProjectJson.Controllers
 						h.subprojeto = cts.subprojeto and
 						h.entrega = cts.entrega and
 						h.tabela = 'TESTCYCL' and 
+						h.tabela_id =  cts.ct and 
 						h.campo = '(EVIDÊNCIA) VALIDAÇÃO TÉCNICA' and
 						h.novo_valor = cts.Evidencia_Validacao_Tecnica
+					order by 
+						substring(dt_alteracao,7,2)+substring(dt_alteracao,4,2)+substring(dt_alteracao,1,2) desc
 					),4,5) as date,
 					0 as active,
 					0 as activeUAT,
@@ -1619,8 +2002,11 @@ namespace ProjectJson.Controllers
 						h.subprojeto = cts.subprojeto and
 						h.entrega = cts.entrega and
 						h.tabela = 'TESTCYCL' and 
+						h.tabela_id =  cts.ct and 
 						h.campo = '(EVIDÊNCIA) VALIDAÇÃO CLIENTE' and
 						h.novo_valor = cts.Evidencia_Validacao_Cliente
+					order by 
+						substring(dt_alteracao,7,2)+substring(dt_alteracao,4,2)+substring(dt_alteracao,1,2) desc
 					),4,5) as date,
 					0 as active,
 					0 as activeUAT,
@@ -1702,8 +2088,9 @@ namespace ProjectJson.Controllers
 
             return List;
         }
+        */
 
-
+        /*
         [HttpGet]
         [Route("ctsImpactedXDefects/{subproject}/{delivery}")]
         public List<ctsImpactedXDefects> getCtsImpactedXDefects(string subproject, string delivery)
@@ -1803,8 +2190,9 @@ namespace ProjectJson.Controllers
 
             return List;
         }
+        */
 
-
+        /*
         [HttpGet]
         [Route("productivityXDefects/{subproject}/{delivery}")]
         public List<productivityXDefects> getProductivityXDefects(string subproject, string delivery)
@@ -1930,7 +2318,9 @@ namespace ProjectJson.Controllers
 
             return List;
         }
+        */
 
+        /*
         [HttpGet]
         [Route("productivityXDefectsGroupWeekly/{subproject}/{delivery}")]
         public List<productivityXDefectsGroupWeekly> getProductivityXDefectsGroupWeekly(string subproject, string delivery)
@@ -2111,7 +2501,7 @@ namespace ProjectJson.Controllers
 
             return List;
         }
-
+        */
 
         /*
         [HttpGet]
@@ -2161,7 +2551,6 @@ namespace ProjectJson.Controllers
             return List;
         }
         */
-
 
         [HttpGet]
         [Route("defectsNoPrediction")]
@@ -2218,6 +2607,55 @@ namespace ProjectJson.Controllers
             return List;
         }
 
+        [HttpGet]
+        [Route("defectsNoPrediction/{dateBegin}/{dateEnd}")]
+        public List<noPredictionDefects> getnoPredictionDefectsByDate(string dateBegin, string dateEnd)
+        {
+            string sql = @"
+                select
+	                substring(dt_final,1,2) + '/' + substring(dt_final,4,2) + '/' + substring(dt_final,7,2) as date,
+	                fabrica_desenvolvimento as devManufacturing,
+	                sistema_defeito as system,
+	                convert(varchar, cast(substring(Subprojeto,4,8) as int)) + ' ' + convert(varchar,cast(substring(Entrega,8,8) as int)) as project,
+	                subprojeto as subproject,
+	                entrega as delivery,
+	                count (*) as qtyTotal,
+	                sum(case when Dt_Prevista_Solucao_Defeito <> '' then 0 else 1 end) as qty,
+	                round(convert(float,sum(case when Dt_Prevista_Solucao_Defeito = '' then 1 else 0 end)) / count(*) * 100,2) as [percent],
+	                5 as percentReference,
+	                round(convert(float,count(*) * 0.05),2) as qtyReference
+                from 
+	                alm_defeitos 
+                where 
+	                (ciclo like '%TI%' or ciclo like '%UAT%') and
+	                status_atual = 'CLOSED' and
+	                dt_final <> '' and
+					substring(dt_final,7,2) + substring(dt_final,4,2) + substring(dt_final,1,2) >= '@dateBegin' and
+					substring(dt_final,7,2) + substring(dt_final,4,2) + substring(dt_final,1,2) <= '@dateEnd'
+                group by
+				    substring(dt_final,1,2),
+	                substring(dt_final,4,2),
+	                substring(dt_final,7,2),
+	                subprojeto,
+	                entrega,
+	                fabrica_desenvolvimento,
+	                sistema_defeito
+                order by 
+	                substring(dt_final,7,2),
+	                substring(dt_final,4,2),
+					substring(dt_final,1,2),
+	                fabrica_desenvolvimento
+            ";
+
+            sql = sql.Replace("@dateBegin", dateBegin);
+            sql = sql.Replace("@dateEnd", dateEnd);
+
+            var Connection = new Connection(Bancos.Sgq);
+            List<noPredictionDefects> List = Connection.Executar<noPredictionDefects>(sql);
+            Connection.Dispose();
+
+            return List;
+        }
 
         /* PEDRO */
 

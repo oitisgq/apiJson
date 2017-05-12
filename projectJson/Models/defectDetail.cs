@@ -14,6 +14,7 @@ namespace ProjectJson.Models
         public string name { get; set; }
         public string cycle { get; set; }
         public int CT { get; set; }
+        public string ctName { get; set; }
         public string ctSystem { get; set; }
         public string defectSystem { get; set; }
         public string devManuf { get; set; }
@@ -30,6 +31,7 @@ namespace ProjectJson.Models
         public int qtyImpactedCTs { get; set; }
         public int qtyPingPong { get; set; }
         public double aging { get; set; }
+        public string agingDisplay { get; set; }
         public string Comments { get; set; }
     }
 }

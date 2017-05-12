@@ -42,6 +42,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CodeDom.Providers.DotNetCompilerPlatform, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
@@ -52,11 +53,19 @@
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Web.Cors, Version=5.2.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.AspNet.Cors.5.2.3\lib\net45\System.Web.Cors.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System.Web.Entity" />
     <Reference Include="System.Web.ApplicationServices" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Web.Http.Cors, Version=5.2.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.AspNet.WebApi.Cors.5.2.3\lib\net45\System.Web.Http.Cors.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Windows.Forms.DataVisualization" />
     <Reference Include="System.Xml.Linq" />
@@ -170,10 +179,14 @@
     <Compile Include="Classes\LibsAplicativo.cs" />
     <Compile Include="Controllers\AuthController.cs" />
     <Compile Include="Controllers\eMailController.cs" />
+    <Compile Include="Controllers\ProjectXGrouperController.cs" />
+    <Compile Include="Controllers\GrouperController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\ProjectController.cs" />
     <Compile Include="Controllers\SGQController.cs" />
     <Compile Include="Controllers\ValuesController.cs" />
+    <Compile Include="DAOs\ProjectXGrouperDAO.cs" />
+    <Compile Include="DAOs\GrouperDAO.cs" />
     <Compile Include="DAOs\UserDAO.cs" />
     <Compile Include="DAOs\ProjectDAO.cs" />
     <Compile Include="Global.asax.cs">
@@ -185,18 +198,24 @@
     <Compile Include="Models\bptReleases.cs" />
     <Compile Include="Models\bptValidPlanoEvid.cs" />
     <Compile Include="Models\eMail\Email.cs" />
+    <Compile Include="Models\ProjectXGrouper\ProjectXGrouper.cs" />
+    <Compile Include="Models\Grouper\Grouper.cs" />
     <Compile Include="Models\productivityXDefectsGroupWeekly.cs" />
     <Compile Include="Models\productivityXDefects.cs" />
     <Compile Include="Models\ctsImpactedXDefects.cs" />
     <Compile Include="Models\defectDetail.cs" />
     <Compile Include="Models\defectsOpen.cs" />
     <Compile Include="Models\defectsStatus.cs" />
+    <Compile Include="Models\project\CtsImpactedXDefects.cs" />
     <Compile Include="Models\project\DefectAverangeTime.cs" />
     <Compile Include="Models\project\DefectAverangeTimeGroupSeverity.cs" />
     <Compile Include="Models\project\DefectDensity.cs" />
     <Compile Include="Models\project\DefectReopened.cs" />
+    <Compile Include="Models\project\DefectsOpen.cs" />
     <Compile Include="Models\project\DefectStatus.cs" />
     <Compile Include="Models\project\DetectableInDev.cs" />
+    <Compile Include="Models\project\ProductivityXDefects.cs" />
+    <Compile Include="Models\project\ProductivityXDefectsGroupWeekly.cs" />
     <Compile Include="Models\project\StatusLastDays.cs" />
     <Compile Include="Models\project\ProjectFull.cs" />
     <Compile Include="Models\project\Project.cs" />

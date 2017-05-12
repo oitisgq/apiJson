@@ -31,7 +31,7 @@ namespace Classes
                     StartInfo =
                     {
                         FileName = HtmlToImageExPath,
-                        Arguments = ((options == null) ? "" : String.Join(" ", options)) + " -p http://oi12949:DaniJOF5@10.32.150.40:82 " + urlsSeparatedBySpaces + " " + outFilename,
+                        Arguments = ((options == null) ? "" : String.Join(" ", options)) + urlsSeparatedBySpaces + " " + outFilename,
                         UseShellExecute = false, // needs to be false in order to redirect output
                         RedirectStandardOutput = true,
                         RedirectStandardError = true,

@@ -7,6 +7,7 @@ namespace ProjectJson.Models
 {
     public class iteration
     {
+        public string id { get; set; }
         public string name { get; set; }
     }
 }
